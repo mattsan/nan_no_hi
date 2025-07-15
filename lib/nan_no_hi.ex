@@ -10,6 +10,12 @@ defmodule NanNoHi do
     Server.start_link(options)
   end
 
+  def append(pid, date, description) do
+    {year, month, day} = Date.to_erl(date)
+
+    Server.append(pid, year, month, day, description)
+  end
+
   def lookup(pid, year) do
     Server.lookup(pid, year)
   end

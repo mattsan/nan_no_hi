@@ -116,4 +116,14 @@ defmodule NanNoHiTest do
       assert [] == NanNoHi.lookup(pid, 2025, 5, 7)
     end
   end
+
+  describe "append/2" do
+    test "append a date", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
+
+      NanNoHi.append(pid, ~D[2025-07-15], "rainy day")
+
+      assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
+    end
+  end
 end
