@@ -31,16 +31,26 @@ defmodule NanNoHi.Server do
 
   @impl true
   def handle_call({:lookup, year}, _from, state) do
-    {:reply, {:ok, year}, state}
+    result = lookup_dates(year, :_, :_)
+
+    {:reply, {:ok, result}, state}
   end
 
   @impl true
   def handle_call({:lookup, year, month}, _from, state) do
-    {:reply, {:ok, year, month}, state}
+    result = lookup_dates(year, month, :_)
+
+    {:reply, {:ok, result}, state}
   end
 
   @impl true
   def handle_call({:lookup, year, month, day}, _from, state) do
-    {:reply, {:ok, year, month, day}, state}
+    result = lookup_dates(year, month, day)
+
+    {:reply, {:ok, result}, state}
+  end
+
+  defp lookup_dates(year, month, day) do
+    [{{year, month, day}, "dummy"}]
   end
 end

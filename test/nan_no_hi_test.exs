@@ -10,19 +10,19 @@ defmodule NanNoHiTest do
 
   describe "lookup/2" do
     test "dummy", %{pid: pid} do
-      assert {:ok, 2025} == NanNoHi.lookup(pid, 2025)
+      assert {:ok, [{{2025, :_, :_}, "dummy"}]} == NanNoHi.lookup(pid, 2025)
     end
   end
 
   describe "lookup/3" do
     test "dummy", %{pid: pid} do
-      assert {:ok, 2025, 7} == NanNoHi.lookup(pid, 2025, 7)
+      assert {:ok, [{{2025, 7, :_}, "dummy"}]} == NanNoHi.lookup(pid, 2025, 7)
     end
   end
 
   describe "lookup/4" do
     test "dummy", %{pid: pid} do
-      assert {:ok, 2025, 7, 15} == NanNoHi.lookup(pid, 2025, 7, 15)
+      assert {:ok, [{{2025, 7, 15}, "dummy"}]} == NanNoHi.lookup(pid, 2025, 7, 15)
     end
   end
 end
