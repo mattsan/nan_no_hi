@@ -65,5 +65,6 @@ defmodule NanNoHi.Server do
 
   defp lookup_dates(table, year, month, day) do
     :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
+    |> Enum.map(fn {erl_date, date} -> {Date.from_erl!(erl_date), date} end)
   end
 end
