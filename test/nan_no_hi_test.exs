@@ -78,7 +78,7 @@ defmodule NanNoHiTest do
         {~D[2025-11-24], "休日"}
       ]
 
-      assert {:ok, expected_dates} == NanNoHi.lookup(pid, 2025)
+      assert expected_dates == NanNoHi.lookup(pid, 2025)
     end
   end
 
@@ -91,21 +91,21 @@ defmodule NanNoHiTest do
         {~D[2025-05-06], "休日"}
       ]
 
-      assert {:ok, expected_dates} == NanNoHi.lookup(pid, 2025, 5)
+      assert expected_dates == NanNoHi.lookup(pid, 2025, 5)
     end
 
     test "2025年6月", %{pid: pid} do
-      assert {:ok, []} == NanNoHi.lookup(pid, 2025, 6)
+      assert [] == NanNoHi.lookup(pid, 2025, 6)
     end
   end
 
   describe "lookup/4" do
     test "2025年5月5日", %{pid: pid} do
-      assert {:ok, [{~D[2025-05-05], "こどもの日"}]} == NanNoHi.lookup(pid, 2025, 5, 5)
+      assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(pid, 2025, 5, 5)
     end
 
     test "2025年5月7日", %{pid: pid} do
-      assert {:ok, []} == NanNoHi.lookup(pid, 2025, 5, 7)
+      assert [] == NanNoHi.lookup(pid, 2025, 5, 7)
     end
   end
 end
