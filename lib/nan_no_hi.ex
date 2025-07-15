@@ -1,18 +1,24 @@
 defmodule NanNoHi do
   @moduledoc """
-  Documentation for `NanNoHi`.
+  A interface of NanNoHi.
   """
 
-  @doc """
-  Hello world.
+  alias NanNoHi.Server
 
-  ## Examples
+  @spec start_link(Keyword.t()) :: GenServer.on_start()
+  def start_link(options \\ []) do
+    Server.start_link(options)
+  end
 
-      iex> NanNoHi.hello()
-      :world
+  def lookup(pid, year) do
+    Server.lookup(pid, year)
+  end
 
-  """
-  def hello do
-    :world
+  def lookup(pid, year, month) do
+    Server.lookup(pid, year, month)
+  end
+
+  def lookup(pid, year, month, day) do
+    Server.lookup(pid, year, month, day)
   end
 end
