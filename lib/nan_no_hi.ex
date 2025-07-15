@@ -10,7 +10,7 @@ defmodule NanNoHi do
     Server.start_link(options)
   end
 
-  def append(pid, date, description) do
+  def append(pid, date, description) when is_struct(date, Date) do
     {year, month, day} = Date.to_erl(date)
 
     Server.append(pid, year, month, day, description)
