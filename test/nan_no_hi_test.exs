@@ -45,8 +45,8 @@ defmodule NanNoHiTest do
       {~D[2025-11-23], "勤労感謝の日"},
       {~D[2025-11-24], "休日"}
     ]
-    |> Enum.each(fn {date, detail} ->
-      NanNoHi.append(pid, date, detail)
+    |> Enum.each(fn {date, event} ->
+      NanNoHi.append(pid, date, event)
     end)
   end
 

@@ -12,8 +12,8 @@ defmodule NanNoHi.Server do
     GenServer.start_link(__MODULE__, server_options, gen_server_options)
   end
 
-  def append(pid, year, month, day, date) do
-    GenServer.cast(pid, {:append, year, month, day, date})
+  def append(pid, year, month, day, event) do
+    GenServer.cast(pid, {:append, year, month, day, event})
   end
 
   def lookup(pid, year) do
@@ -36,8 +36,8 @@ defmodule NanNoHi.Server do
   end
 
   @impl true
-  def handle_cast({:append, year, month, day, date}, state) do
-    :ets.insert(state.table, {{year, month, day}, date})
+  def handle_cast({:append, year, month, day, event}, state) do
+    :ets.insert(state.table, {{year, month, day}, event})
 
     {:noreply, state}
   end
@@ -66,6 +66,6 @@ defmodule NanNoHi.Server do
   defp lookup_dates(table, year, month, day) do
     :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
     |> Enum.sort()
-    |> Enum.map(fn {erl_date, date} -> {Date.from_erl!(erl_date), date} end)
+    |> Enum.map(fn {erl_date, event} -> {Date.from_erl!(erl_date), event} end)
   end
 end
