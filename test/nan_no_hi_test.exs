@@ -2,9 +2,7 @@ defmodule NanNoHiTest do
   use ExUnit.Case
   doctest NanNoHi
 
-  setup do
-    {:ok, pid} = start_supervised(NanNoHi.Server)
-
+  defp store_japanese_holidays(%{pid: pid}) do
     [
       {2024, 1, 1, "元日"},
       {2024, 1, 8, "成人の日"},
@@ -50,11 +48,17 @@ defmodule NanNoHiTest do
     |> Enum.each(fn {year, month, day, date} ->
       NanNoHi.Server.append(pid, year, month, day, date)
     end)
+  end
+
+  setup do
+    {:ok, pid} = start_supervised(NanNoHi.Server)
 
     [pid: pid]
   end
 
   describe "lookup/2" do
+    setup :store_japanese_holidays
+
     test "2025年", %{pid: pid} do
       expected_dates = [
         {~D[2025-01-01], "元日"},
@@ -83,6 +87,8 @@ defmodule NanNoHiTest do
   end
 
   describe "lookup/3" do
+    setup :store_japanese_holidays
+
     test "2025年5月", %{pid: pid} do
       expected_dates = [
         {~D[2025-05-03], "憲法記念日"},
@@ -100,6 +106,8 @@ defmodule NanNoHiTest do
   end
 
   describe "lookup/4" do
+    setup :store_japanese_holidays
+
     test "2025年5月5日", %{pid: pid} do
       assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(pid, 2025, 5, 5)
     end
