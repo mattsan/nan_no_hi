@@ -12,6 +12,10 @@ defmodule NanNoHi.Server do
     GenServer.start_link(__MODULE__, server_options, gen_server_options)
   end
 
+  def append(pid, year, month, day, date) do
+    GenServer.cast(pid, {:append, year, month, day, date})
+  end
+
   def lookup(pid, year) do
     GenServer.call(pid, {:lookup, year})
   end
@@ -26,31 +30,40 @@ defmodule NanNoHi.Server do
 
   @impl true
   def init(_) do
-    {:ok, %{}}
+    table = :ets.new(__MODULE__, [:ordered_set])
+
+    {:ok, %{table: table}}
+  end
+
+  @impl true
+  def handle_cast({:append, year, month, day, date}, state) do
+    :ets.insert(state.table, {{year, month, day}, date})
+
+    {:noreply, state}
   end
 
   @impl true
   def handle_call({:lookup, year}, _from, state) do
-    result = lookup_dates(year, :_, :_)
+    result = lookup_dates(state.table, year, :_, :_)
 
     {:reply, {:ok, result}, state}
   end
 
   @impl true
   def handle_call({:lookup, year, month}, _from, state) do
-    result = lookup_dates(year, month, :_)
+    result = lookup_dates(state.table, year, month, :_)
 
     {:reply, {:ok, result}, state}
   end
 
   @impl true
   def handle_call({:lookup, year, month, day}, _from, state) do
-    result = lookup_dates(year, month, day)
+    result = lookup_dates(state.table, year, month, day)
 
     {:reply, {:ok, result}, state}
   end
 
-  defp lookup_dates(year, month, day) do
-    [{{year, month, day}, "dummy"}]
+  defp lookup_dates(table, year, month, day) do
+    :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
   end
 end
