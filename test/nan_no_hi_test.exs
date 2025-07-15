@@ -125,5 +125,16 @@ defmodule NanNoHiTest do
 
       assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
     end
+
+    test "append two events on a day", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
+
+      NanNoHi.append(pid, ~D[2025-07-16], "rainy day")
+      NanNoHi.append(pid, ~D[2025-07-16], "Wednesday")
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7, 16))
+    end
   end
 end

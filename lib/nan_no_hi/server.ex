@@ -30,7 +30,7 @@ defmodule NanNoHi.Server do
 
   @impl true
   def init(_) do
-    table = :ets.new(__MODULE__, [:ordered_set])
+    table = :ets.new(__MODULE__, [:bag])
 
     {:ok, %{table: table}}
   end
@@ -65,6 +65,7 @@ defmodule NanNoHi.Server do
 
   defp lookup_dates(table, year, month, day) do
     :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
+    |> Enum.sort()
     |> Enum.map(fn {erl_date, date} -> {Date.from_erl!(erl_date), date} end)
   end
 end
