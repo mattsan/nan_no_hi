@@ -4,6 +4,10 @@ defmodule NanNoHi.Server do
   """
   use GenServer
 
+  defguard is_date(year) when is_integer(year)
+  defguard is_date(year, month) when is_date(year) and month in 1..12
+  defguard is_date(year, month, day) when is_date(year, month) and day in 1..31
+
   @server_option_keys []
 
   def start_link(options) do
@@ -12,19 +16,19 @@ defmodule NanNoHi.Server do
     GenServer.start_link(__MODULE__, server_options, gen_server_options)
   end
 
-  def append(pid, year, month, day, event) do
+  def append(pid, year, month, day, event) when is_date(year, month, day) do
     GenServer.cast(pid, {:append, year, month, day, event})
   end
 
-  def lookup(pid, year) do
+  def lookup(pid, year) when is_date(year) do
     GenServer.call(pid, {:lookup, year})
   end
 
-  def lookup(pid, year, month) do
+  def lookup(pid, year, month) when is_date(year, month) do
     GenServer.call(pid, {:lookup, year, month})
   end
 
-  def lookup(pid, year, month, day) do
+  def lookup(pid, year, month, day) when is_date(year, month, day) do
     GenServer.call(pid, {:lookup, year, month, day})
   end
 

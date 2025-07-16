@@ -7,7 +7,8 @@ defmodule NanNoHi.MixProject do
       version: "0.1.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      deps: deps(),
+      docs: docs()
     ]
   end
 
@@ -22,6 +23,18 @@ defmodule NanNoHi.MixProject do
       {:credo, "~> 1.7", only: :dev, runtime: false},
       {:dialyxir, "~> 1.4", only: :dev, runtime: false},
       {:ex_doc, "~> 0.38.2", only: :dev, runtime: false}
+    ]
+  end
+
+  def docs do
+    [
+      extras: [
+        "README.md"
+      ],
+      main: "readme",
+      groups_for_docs: [
+        Guards: &(&1[:guard] == true)
+      ]
     ]
   end
 end

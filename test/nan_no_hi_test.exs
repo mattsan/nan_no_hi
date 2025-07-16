@@ -59,7 +59,7 @@ defmodule NanNoHiTest do
   describe "lookup/2" do
     setup :store_japanese_holidays
 
-    test "2025年", %{pid: pid} do
+    test "2025", %{pid: pid} do
       expected_dates = [
         {~D[2025-01-01], "元日"},
         {~D[2025-01-13], "成人の日"},
@@ -84,12 +84,20 @@ defmodule NanNoHiTest do
 
       assert expected_dates == NanNoHi.lookup(pid, 2025)
     end
+
+    test "~D[2025-05-05]", %{pid: pid} do
+      assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(pid, ~D[2025-05-05])
+    end
+
+    test "invalid year value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(pid, "2025") end)
+    end
   end
 
   describe "lookup/3" do
     setup :store_japanese_holidays
 
-    test "2025年5月", %{pid: pid} do
+    test "2025-05", %{pid: pid} do
       expected_dates = [
         {~D[2025-05-03], "憲法記念日"},
         {~D[2025-05-04], "みどりの日"},
@@ -100,24 +108,32 @@ defmodule NanNoHiTest do
       assert expected_dates == NanNoHi.lookup(pid, 2025, 5)
     end
 
-    test "2025年6月", %{pid: pid} do
+    test "2025-06", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 6)
+    end
+
+    test "invalid month value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(pid, 2025, 13) end)
     end
   end
 
   describe "lookup/4" do
     setup :store_japanese_holidays
 
-    test "2025年5月5日", %{pid: pid} do
+    test "2025-05-05", %{pid: pid} do
       assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(pid, 2025, 5, 5)
     end
 
-    test "2025年5月7日", %{pid: pid} do
+    test "2025-05-07", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 5, 7)
+    end
+
+    test "invalid day value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(pid, 2025, 1, 32) end)
     end
   end
 
-  describe "append/2" do
+  describe "append/3" do
     test "append a date", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
@@ -135,6 +151,53 @@ defmodule NanNoHiTest do
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
 
       assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7, 16))
+    end
+
+    test "invalid date value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, "2025-01-01", "元日") end)
+    end
+  end
+
+  describe "append/5" do
+    test "append a date", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
+
+      NanNoHi.append(pid, 2025, 7, 15, "rainy day")
+
+      assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
+    end
+
+    test "append two events on a day", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
+
+      NanNoHi.append(pid, 2025, 7, 16, "rainy day")
+      NanNoHi.append(pid, 2025, 7, 16, "Wednesday")
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7, 16))
+    end
+
+    test "invalid year value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, "2025", 1, 1, "invalid") end)
+    end
+
+    test "invalid month value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, 2025, 13, 1, "invalid") end)
+    end
+
+    test "invalid day value", %{pid: pid} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, 2025, 1, 32, "invalid") end)
+    end
+  end
+
+  describe "append complex events" do
+    test "append tuples", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
+
+      NanNoHi.append(pid, 2025, 7, 16, {"曜日", "水曜日"})
+
+      assert [{~D[2025-07-16], {"曜日", "水曜日"}}] == NanNoHi.lookup(pid, 2025, 7, 16)
     end
   end
 end
