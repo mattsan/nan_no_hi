@@ -8,6 +8,8 @@ defmodule NanNoHi.Server do
   defguard is_date(year, month) when is_date(year) and month in 1..12
   defguard is_date(year, month, day) when is_date(year, month) and day in 1..31
 
+  NimbleCSV.define(CsvParser, [])
+
   @server_option_keys []
 
   def start_link(options) do
@@ -51,11 +53,26 @@ defmodule NanNoHi.Server do
   end
 
   @impl true
-  def handle_call({:import, events}, _from, state) do
+  def handle_call({:import, events}, _from, state) when is_list(events) do
     events
-    |> Enum.each(fn {date, event} ->
-      :ets.insert(state.table, {date, event})
+    |> import_events(state.table)
+
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:import, events}, _from, state) when is_binary(events) do
+    events
+    |> CsvParser.parse_string()
+    |> Enum.map(fn [string_date, event] ->
+      date =
+        string_to_erl_date(string_date)
+        |> Enum.map(&String.to_integer/1)
+        |> List.to_tuple()
+
+      {date, event}
     end)
+    |> import_events(state.table)
 
     {:reply, :ok, state}
   end
@@ -79,6 +96,21 @@ defmodule NanNoHi.Server do
     result = lookup_dates(state.table, year, month, day)
 
     {:reply, result, state}
+  end
+
+  defp import_events(events, table) do
+    events
+    |> Enum.each(fn {date, event} ->
+      :ets.insert(table, {date, event})
+    end)
+  end
+
+  defp string_to_erl_date(string) do
+    Regex.run(
+      ~r"\A(?<year>-?\d{1,4})[-/]?(?<month>\d{1,2})[-/]?(?<day>\d{1,2})\Z",
+      string,
+      capture: ~w(year month day)
+    )
   end
 
   defp lookup_dates(table, year, month, day) do

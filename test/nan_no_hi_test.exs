@@ -195,7 +195,37 @@ defmodule NanNoHiTest do
     test "import two events", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7)
 
-      NanNoHi.import(pid, [{{2025, 7, 16}, "Wednesday"}, {{2025, 7, 17}, "rainy day"}])
+      :ok = NanNoHi.import(pid, [{{2025, 7, 16}, "Wednesday"}, {{2025, 7, 17}, "rainy day"}])
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+    end
+
+    test "import from CSV format string (YYYY-MM-DD)", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      :ok =
+        NanNoHi.import(pid, """
+        date,event
+        2025-07-16,Wednesday
+        2025-07-17,rainy day
+        """)
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+    end
+
+    test "import from CSV format string (YYYY/MM/DD)", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      :ok =
+        NanNoHi.import(pid, """
+        date,event
+        2025/7/16,Wednesday
+        2025/7/17,rainy day
+        """)
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
 
