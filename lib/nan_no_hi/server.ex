@@ -17,7 +17,11 @@ defmodule NanNoHi.Server do
   end
 
   def append(pid, year, month, day, event) when is_date(year, month, day) do
-    GenServer.cast(pid, {:append, year, month, day, event})
+    GenServer.call(pid, {:append, year, month, day, event})
+  end
+
+  def import(pid, events) do
+    GenServer.call(pid, {:import, events})
   end
 
   def lookup(pid, year) when is_date(year) do
@@ -40,10 +44,20 @@ defmodule NanNoHi.Server do
   end
 
   @impl true
-  def handle_cast({:append, year, month, day, event}, state) do
+  def handle_call({:append, year, month, day, event}, _from, state) do
     :ets.insert(state.table, {{year, month, day}, event})
 
-    {:noreply, state}
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call({:import, events}, _from, state) do
+    events
+    |> Enum.each(fn {date, event} ->
+      :ets.insert(state.table, {date, event})
+    end)
+
+    {:reply, :ok, state}
   end
 
   @impl true

@@ -63,4 +63,6 @@ defmodule NanNoHi do
   """
   @spec append(pid(), year(), month(), day(), event()) :: :ok
   defdelegate append(pid, year, month, day, event), to: Server
+
+  defdelegate import(pid, events), to: Server
 end
