@@ -10,6 +10,8 @@ defmodule NanNoHi.Server do
 
   NimbleCSV.define(CsvParser, [])
 
+  import NanNoHi.Utils, only: [string_to_erl_date: 1]
+
   @server_option_keys []
 
   def start_link(options) do
@@ -65,12 +67,9 @@ defmodule NanNoHi.Server do
     events
     |> CsvParser.parse_string()
     |> Enum.map(fn [string_date, event] ->
-      date =
-        string_to_erl_date(string_date)
-        |> Enum.map(&String.to_integer/1)
-        |> List.to_tuple()
-
-      {date, event}
+      case string_to_erl_date(string_date) do
+        {:ok, date} -> {date, event}
+      end
     end)
     |> import_events(state.table)
 
@@ -103,14 +102,6 @@ defmodule NanNoHi.Server do
     |> Enum.each(fn {date, event} ->
       :ets.insert(table, {date, event})
     end)
-  end
-
-  defp string_to_erl_date(string) do
-    Regex.run(
-      ~r"\A(?<year>-?\d{1,4})[-/]?(?<month>\d{1,2})[-/]?(?<day>\d{1,2})\Z",
-      string,
-      capture: ~w(year month day)
-    )
   end
 
   defp lookup_dates(table, year, month, day) do
