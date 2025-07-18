@@ -137,7 +137,7 @@ defmodule NanNoHiTest do
     test "append a date", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
-      NanNoHi.append(pid, ~D[2025-07-15], "rainy day")
+      assert :ok == NanNoHi.append(pid, ~D[2025-07-15], "rainy day")
 
       assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
     end
@@ -145,8 +145,8 @@ defmodule NanNoHiTest do
     test "append two events on a day", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
 
-      NanNoHi.append(pid, ~D[2025-07-16], "rainy day")
-      NanNoHi.append(pid, ~D[2025-07-16], "Wednesday")
+      assert :ok == NanNoHi.append(pid, ~D[2025-07-16], "rainy day")
+      assert :ok == NanNoHi.append(pid, ~D[2025-07-16], "Wednesday")
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
 
@@ -162,7 +162,7 @@ defmodule NanNoHiTest do
     test "append a date", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
-      NanNoHi.append(pid, 2025, 7, 15, "rainy day")
+      assert :ok == NanNoHi.append(pid, 2025, 7, 15, "rainy day")
 
       assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
     end
@@ -170,8 +170,8 @@ defmodule NanNoHiTest do
     test "append two events on a day", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
 
-      NanNoHi.append(pid, 2025, 7, 16, "rainy day")
-      NanNoHi.append(pid, 2025, 7, 16, "Wednesday")
+      assert :ok == NanNoHi.append(pid, 2025, 7, 16, "rainy day")
+      assert :ok == NanNoHi.append(pid, 2025, 7, 16, "Wednesday")
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
 
@@ -191,11 +191,86 @@ defmodule NanNoHiTest do
     end
   end
 
+  describe "import/2" do
+    test "import two events", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      list = [{{2025, 7, 16}, "Wednesday"}, {{2025, 7, 17}, "rainy day"}]
+
+      assert :ok == NanNoHi.import(pid, list)
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+    end
+
+    test "import from CSV format string (YYYY-MM-DD)", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string =
+        """
+        date,event
+        2025-07-16,Wednesday
+        2025-07-17,rainy day
+        """
+
+      assert :ok == NanNoHi.import(pid, string)
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+    end
+
+    test "import from CSV format string (YYYY/MM/DD)", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string = """
+      date,event
+      2025/7/16,Wednesday
+      2025/7/17,rainy day
+      """
+
+      assert :ok == NanNoHi.import(pid, string)
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+    end
+
+    test "import CSV format string including invalid dates", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string = """
+      date,event
+      2025-07-01,Tuesday
+      7 1st 2025,Tuesday
+      2025-07-02,Wednesday
+      7 2nd 2025,Wednesday
+      """
+
+      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(pid, string)
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+    end
+
+    test "import invalid CSV format string", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string = """
+      date,event
+      7 1st 2025,Tuesday
+      7 2nd 2025,Wednesday
+      """
+
+      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(pid, string)
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+    end
+  end
+
   describe "append complex events" do
     test "append tuples", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
-      NanNoHi.append(pid, 2025, 7, 16, {"曜日", "水曜日"})
+      assert :ok == NanNoHi.append(pid, 2025, 7, 16, {"曜日", "水曜日"})
 
       assert [{~D[2025-07-16], {"曜日", "水曜日"}}] == NanNoHi.lookup(pid, 2025, 7, 16)
     end
