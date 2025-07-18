@@ -10,11 +10,12 @@ defmodule NanNoHi do
   @type day :: 1..31
   @type event :: term()
   @type events :: [{:calendar.date(), event()}]
+  @type options() :: keyword()
 
   @doc """
   Starts NanNoHi server.
   """
-  @spec start_link(Keyword.t()) :: GenServer.on_start()
+  @spec start_link(options()) :: GenServer.on_start()
   defdelegate start_link(options \\ []), to: Server
 
   @doc """

@@ -14,7 +14,7 @@ defmodule NanNoHi.Server do
 
   @server_option_keys []
 
-  @spec start_link(keyword()) :: GenServer.on_start()
+  @spec start_link(NanNoHi.options()) :: GenServer.on_start()
   def start_link(options) do
     {server_options, gen_server_options} = Keyword.split(options, @server_option_keys)
 
