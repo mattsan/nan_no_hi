@@ -34,6 +34,7 @@ defmodule NanNoHi.Utils do
          {year, ""} <- Integer.parse(year_s),
          {month, ""} <- Integer.parse(month_s),
          {day, ""} <- Integer.parse(day_s),
+         true <- year > 0,
          true <- :calendar.valid_date(year, month, day) do
       {:ok, {year, month, day}}
     else
@@ -44,7 +45,7 @@ defmodule NanNoHi.Utils do
 
   defp parse_date_string(string) do
     Regex.run(
-      ~r/\A(?<year>-?\d{1,4})(?<sep>[-\/]?)(?<month>\d{1,2})(\k<sep>)(?<day>\d{1,2})\z/,
+      ~r/\A(?<year>\d{1,4})(?<sep>[-\/]?)(?<month>\d{1,2})(\k<sep>)(?<day>\d{1,2})\z/,
       string,
       capture: ~w(year month day)
     )

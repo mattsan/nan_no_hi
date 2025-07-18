@@ -5,7 +5,7 @@ defmodule NanNoHi do
 
   alias NanNoHi.Server
 
-  @type year :: integer()
+  @type year :: pos_integer()
   @type month :: 1..12
   @type day :: 1..31
   @type event :: term()

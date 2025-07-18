@@ -4,7 +4,7 @@ defmodule NanNoHi.Server do
   """
   use GenServer
 
-  defguard is_date(year) when is_integer(year)
+  defguard is_date(year) when is_integer(year) and year > 0
   defguard is_date(year, month) when is_date(year) and month in 1..12
   defguard is_date(year, month, day) when is_date(year, month) and day in 1..31
 
