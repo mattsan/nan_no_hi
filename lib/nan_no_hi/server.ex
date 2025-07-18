@@ -49,6 +49,11 @@ defmodule NanNoHi.Server do
     GenServer.call(pid, {:lookup, year, month, day})
   end
 
+  @spec clear(pid()) :: :ok
+  def clear(pid) do
+    GenServer.call(pid, :clear)
+  end
+
   @impl true
   @spec init(keyword()) :: {:ok, map()}
   def init(_) do
@@ -112,6 +117,13 @@ defmodule NanNoHi.Server do
     result = lookup_dates(state.table, year, month, day)
 
     {:reply, result, state}
+  end
+
+  @impl true
+  def handle_call(:clear, _from, state) do
+    :ets.delete_all_objects(state.table)
+
+    {:reply, :ok, state}
   end
 
   defp import_events(events, table) do

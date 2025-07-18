@@ -266,6 +266,28 @@ defmodule NanNoHiTest do
     end
   end
 
+  describe "NanNoHi.clear/1" do
+    test "clear all", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string = """
+      date,event
+      2025/7/16,Wednesday
+      2025/7/17,rainy day
+      """
+
+      assert :ok == NanNoHi.import(pid, string)
+
+      expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
+
+      assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+
+      assert :ok == NanNoHi.clear(pid)
+
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+    end
+  end
+
   describe "append complex events" do
     test "append tuples", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)

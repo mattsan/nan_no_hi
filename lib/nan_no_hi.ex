@@ -105,4 +105,7 @@ defmodule NanNoHi do
 
   @spec import(pid(), events()) :: :ok | {:error, term()}
   defdelegate import(pid, events), to: Server
+
+  @spec clear(pid()) :: :ok
+  defdelegate clear(pid), to: Server
 end
