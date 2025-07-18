@@ -28,6 +28,7 @@ defmodule NanNoHi.Utils do
   {:error, "Jan 1st, 2025"}
   ```
   """
+  @spec string_to_erl_date(String.t()) :: {:ok, :calendar.date()} | {:error, String.t()}
   def string_to_erl_date(string) do
     with [year_s, month_s, day_s] <- parse_date_string(string),
          {year, ""} <- Integer.parse(year_s),
@@ -43,7 +44,7 @@ defmodule NanNoHi.Utils do
 
   defp parse_date_string(string) do
     Regex.run(
-      ~r"\A(?<year>-?\d{1,4})[-/]?(?<month>\d{1,2})[-/]?(?<day>\d{1,2})\Z",
+      ~r/\A(?<year>-?\d{1,4})(?<sep>[-\/]?)(?<month>\d{1,2})(\k<sep>)(?<day>\d{1,2})\z/,
       string,
       capture: ~w(year month day)
     )

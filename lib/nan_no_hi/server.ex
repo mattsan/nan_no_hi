@@ -14,33 +14,43 @@ defmodule NanNoHi.Server do
 
   @server_option_keys []
 
+  @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(options) do
     {server_options, gen_server_options} = Keyword.split(options, @server_option_keys)
 
     GenServer.start_link(__MODULE__, server_options, gen_server_options)
   end
 
+  @spec append(pid(), NanNoHi.year(), NanNoHi.month(), NanNoHi.day(), NanNoHi.event()) ::
+          :ok | {:error, term()}
   def append(pid, year, month, day, event) when is_date(year, month, day) do
     GenServer.call(pid, {:append, year, month, day, event})
   end
 
+  @spec import(pid(), NanNoHi.events()) :: :ok | {:error, term()}
   def import(pid, events) do
     GenServer.call(pid, {:import, events})
   end
 
+  @spec lookup(pid(), NanNoHi.year()) :: [{Date.t(), NanNoHi.event()}]
   def lookup(pid, year) when is_date(year) do
     GenServer.call(pid, {:lookup, year})
   end
 
+  @spec lookup(pid(), NanNoHi.year(), NanNoHi.month()) :: [{Date.t(), NanNoHi.event()}]
   def lookup(pid, year, month) when is_date(year, month) do
     GenServer.call(pid, {:lookup, year, month})
   end
 
+  @spec lookup(pid(), NanNoHi.year(), NanNoHi.month(), NanNoHi.day()) :: [
+          {Date.t(), NanNoHi.event()}
+        ]
   def lookup(pid, year, month, day) when is_date(year, month, day) do
     GenServer.call(pid, {:lookup, year, month, day})
   end
 
   @impl true
+  @spec init(keyword()) :: {:ok, map()}
   def init(_) do
     table = :ets.new(__MODULE__, [:bag])
 
