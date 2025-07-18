@@ -137,7 +137,7 @@ defmodule NanNoHiTest do
     test "append a date", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
-      :ok = NanNoHi.append(pid, ~D[2025-07-15], "rainy day")
+      assert :ok == NanNoHi.append(pid, ~D[2025-07-15], "rainy day")
 
       assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
     end
@@ -145,8 +145,8 @@ defmodule NanNoHiTest do
     test "append two events on a day", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
 
-      :ok = NanNoHi.append(pid, ~D[2025-07-16], "rainy day")
-      :ok = NanNoHi.append(pid, ~D[2025-07-16], "Wednesday")
+      assert :ok == NanNoHi.append(pid, ~D[2025-07-16], "rainy day")
+      assert :ok == NanNoHi.append(pid, ~D[2025-07-16], "Wednesday")
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
 
@@ -162,7 +162,7 @@ defmodule NanNoHiTest do
     test "append a date", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
-      :ok = NanNoHi.append(pid, 2025, 7, 15, "rainy day")
+      assert :ok == NanNoHi.append(pid, 2025, 7, 15, "rainy day")
 
       assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
     end
@@ -170,8 +170,8 @@ defmodule NanNoHiTest do
     test "append two events on a day", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
 
-      :ok = NanNoHi.append(pid, 2025, 7, 16, "rainy day")
-      :ok = NanNoHi.append(pid, 2025, 7, 16, "Wednesday")
+      assert :ok == NanNoHi.append(pid, 2025, 7, 16, "rainy day")
+      assert :ok == NanNoHi.append(pid, 2025, 7, 16, "Wednesday")
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-16], "rainy day"}]
 
@@ -195,7 +195,9 @@ defmodule NanNoHiTest do
     test "import two events", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7)
 
-      :ok = NanNoHi.import(pid, [{{2025, 7, 16}, "Wednesday"}, {{2025, 7, 17}, "rainy day"}])
+      list = [{{2025, 7, 16}, "Wednesday"}, {{2025, 7, 17}, "rainy day"}]
+
+      assert :ok == NanNoHi.import(pid, list)
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
 
@@ -205,12 +207,14 @@ defmodule NanNoHiTest do
     test "import from CSV format string (YYYY-MM-DD)", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7)
 
-      :ok =
-        NanNoHi.import(pid, """
+      string =
+        """
         date,event
         2025-07-16,Wednesday
         2025-07-17,rainy day
-        """)
+        """
+
+      assert :ok == NanNoHi.import(pid, string)
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
 
@@ -220,12 +224,13 @@ defmodule NanNoHiTest do
     test "import from CSV format string (YYYY/MM/DD)", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7)
 
-      :ok =
-        NanNoHi.import(pid, """
-        date,event
-        2025/7/16,Wednesday
-        2025/7/17,rainy day
-        """)
+      string = """
+      date,event
+      2025/7/16,Wednesday
+      2025/7/17,rainy day
+      """
+
+      assert :ok == NanNoHi.import(pid, string)
 
       expected_dates = [{~D[2025-07-16], "Wednesday"}, {~D[2025-07-17], "rainy day"}]
 
@@ -265,7 +270,7 @@ defmodule NanNoHiTest do
     test "append tuples", %{pid: pid} do
       assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
 
-      :ok = NanNoHi.append(pid, 2025, 7, 16, {"曜日", "水曜日"})
+      assert :ok == NanNoHi.append(pid, 2025, 7, 16, {"曜日", "水曜日"})
 
       assert [{~D[2025-07-16], {"曜日", "水曜日"}}] == NanNoHi.lookup(pid, 2025, 7, 16)
     end
