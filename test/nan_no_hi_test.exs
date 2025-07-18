@@ -231,6 +231,34 @@ defmodule NanNoHiTest do
 
       assert expected_dates == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
     end
+
+    test "import CSV format string including invalid dates", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string = """
+      date,event
+      2025-07-01,Tuesday
+      7 1st 2025,Tuesday
+      2025-07-02,Wednesday
+      7 2nd 2025,Wednesday
+      """
+
+      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(pid, string)
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+    end
+
+    test "import invalid CSV format string", %{pid: pid} do
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+
+      string = """
+      date,event
+      7 1st 2025,Tuesday
+      7 2nd 2025,Wednesday
+      """
+
+      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(pid, string)
+      assert [] == NanNoHi.lookup(pid, 2025, 7)
+    end
   end
 
   describe "append complex events" do

@@ -78,12 +78,19 @@ defmodule NanNoHi.Server do
     |> CsvParser.parse_string()
     |> Enum.map(fn [string_date, event] ->
       case string_to_erl_date(string_date) do
-        {:ok, date} -> {date, event}
+        {:ok, date} -> {:ok, {date, event}}
+        {:error, _} = error -> error
       end
     end)
-    |> import_events(state.table)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    |> then(fn
+      %{error: errors} ->
+        {:reply, {:error, errors}, state}
 
-    {:reply, :ok, state}
+      %{ok: events} ->
+        import_events(events, state.table)
+        {:reply, :ok, state}
+    end)
   end
 
   @impl true
