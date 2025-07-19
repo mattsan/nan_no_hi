@@ -60,6 +60,8 @@ defmodule NanNoHi do
   [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
   iex> NanNoHi.lookup(pid, 2025, 5, 5)
   [{~D[2025-05-05], "こどもの日"}]
+  iex> NanNoHi.lookup(pid, ~D[2025-01-01])
+  [{~D[2025-01-01], "元日"}]
   ```
 
   From CSV string:
@@ -78,6 +80,8 @@ defmodule NanNoHi do
   [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
   iex> NanNoHi.lookup(pid, 2025, 5, 5)
   [{~D[2025-05-05], "こどもの日"}]
+  iex> NanNoHi.lookup(pid, ~D[2025-01-01])
+  [{~D[2025-01-01], "元日"}]
   ```
 
   Invalid input:
