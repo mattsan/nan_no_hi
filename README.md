@@ -1,6 +1,6 @@
 # NanNoHi
 
-**TODO: Add description**
+NanNoHi ( 何の日？ *What day is it?* ) is a dictionary of dates that allows you to search for holidays, anniversaries and other notable days.
 
 ## Installation
 
