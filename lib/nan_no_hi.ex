@@ -45,7 +45,7 @@ defmodule NanNoHi do
   @doc """
   Looks date events up.
 
-  ### Examples
+  ## Examples
 
   From a list:
 
@@ -88,7 +88,7 @@ defmodule NanNoHi do
   @doc """
   Looks all events up.
 
-  ### Examples
+  ## Examples
 
   ```elixir
   iex> {:ok, pid} = NanNoHi.start_link()
