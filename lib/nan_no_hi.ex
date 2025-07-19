@@ -8,8 +8,8 @@ defmodule NanNoHi do
   @type year :: pos_integer()
   @type month :: 1..12
   @type day :: 1..31
-  @type event :: term()
-  @type events :: [{:calendar.date(), event()}]
+  @type event :: {Date.t(), term()}
+  @type events :: [event]
   @type options() :: keyword()
 
   @doc """
@@ -17,6 +17,32 @@ defmodule NanNoHi do
   """
   @spec start_link(options()) :: GenServer.on_start()
   defdelegate start_link(options \\ []), to: Server
+
+  @doc """
+  Appends a new event.
+
+  `append(pid, ~D[2025-07-15], "Tuesday")` is equivalent to `append(pid, 2025, 7, 15, "Tuesday")`.
+
+  See `append/5`.
+  """
+  @spec append(pid(), Date.t(), term()) :: :ok
+  def append(pid, date, description) when is_struct(date, Date) do
+    {year, month, day} = Date.to_erl(date)
+
+    append(pid, year, month, day, description)
+  end
+
+  @doc """
+  Appends a new event.
+  """
+  @spec append(pid(), year(), month(), day(), term()) :: :ok
+  defdelegate append(pid, year, month, day, description), to: Server
+
+  @doc """
+  Imports multiple events.
+  """
+  @spec import(pid(), events() | String.t()) :: :ok | {:error, term()}
+  defdelegate import(pid, events_or_string), to: Server
 
   @doc """
   Looks date events up.
@@ -103,26 +129,8 @@ defmodule NanNoHi do
   defdelegate lookup_all(pid), to: Server
 
   @doc """
-  Appends a new event.
-
-  See `append/5`.
+  Clears all events.
   """
-  @spec append(pid(), Date.t(), event()) :: :ok
-  def append(pid, date, event) when is_struct(date, Date) do
-    {year, month, day} = Date.to_erl(date)
-
-    append(pid, year, month, day, event)
-  end
-
-  @doc """
-  Appends a new event.
-  """
-  @spec append(pid(), year(), month(), day(), event()) :: :ok
-  defdelegate append(pid, year, month, day, event), to: Server
-
-  @spec import(pid(), events()) :: :ok | {:error, term()}
-  defdelegate import(pid, events), to: Server
-
   @spec clear(pid()) :: :ok
   defdelegate clear(pid), to: Server
 end
