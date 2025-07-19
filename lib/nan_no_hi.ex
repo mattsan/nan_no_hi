@@ -1,6 +1,6 @@
 defmodule NanNoHi do
   @moduledoc """
-  A interface of NanNoHi.
+  An interface for NanNoHi.
   """
 
   alias NanNoHi.Server
@@ -19,11 +19,11 @@ defmodule NanNoHi do
   defdelegate start_link(options \\ []), to: Server
 
   @doc """
-  Appends a new event.
+  Appends a new event using a `Date.t()` and description.
 
   `append(pid, ~D[2025-07-15], "Tuesday")` is equivalent to `append(pid, 2025, 7, 15, "Tuesday")`.
 
-  See `append/5`.
+  See `append/5` for the version that takes year, month, day, and description separately.
   """
   @spec append(pid(), Date.t(), term()) :: :ok
   def append(pid, date, description) when is_struct(date, Date) do
@@ -39,37 +39,9 @@ defmodule NanNoHi do
   defdelegate append(pid, year, month, day, description), to: Server
 
   @doc """
-  Imports multiple events.
-  """
-  @spec import(pid(), events() | String.t()) :: :ok | {:error, term()}
-  defdelegate import(pid, events_or_string), to: Server
+  Imports multiple events from a list or a CSV string.
 
-  @doc """
-  Looks date events up.
-
-  See `lookup/4`.
-  """
-  @spec lookup(pid(), integer() | Date.t()) :: events()
-  def lookup(pid, year_or_date)
-
-  def lookup(pid, %Date{} = date) do
-    {year, month, day} = Date.to_erl(date)
-
-    lookup(pid, year, month, day)
-  end
-
-  defdelegate lookup(pid, year), to: Server
-
-  @doc """
-  Looks date events up.
-
-  See `lookup/4`.
-  """
-  @spec lookup(pid(), year(), month()) :: events()
-  defdelegate lookup(pid, year, month), to: Server
-
-  @doc """
-  Looks date events up.
+  Accepts either a list of events (e.g., `[{~D[2025-01-01], "元日"}]`) or a CSV string.
 
   ## Examples
 
@@ -78,9 +50,9 @@ defmodule NanNoHi do
   ```elixir
   iex> {:ok, pid} = NanNoHi.start_link()
   iex> NanNoHi.import(pid, [
-  ...>   {{2025, 1, 1}, "元日"},
-  ...>   {{2025, 5, 3}, "憲法記念日"},
-  ...>   {{2025, 5, 5}, "こどもの日"}
+  ...>   {~D[2025-01-01], "元日"},
+  ...>   {~D[2025-05-03], "憲法記念日"},
+  ...>   {~D[2025-05-05], "こどもの日"}
   ...> ])
   iex> NanNoHi.lookup(pid, 2025)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
@@ -107,12 +79,71 @@ defmodule NanNoHi do
   iex> NanNoHi.lookup(pid, 2025, 5, 5)
   [{~D[2025-05-05], "こどもの日"}]
   ```
+
+  Invalid input:
+
+  ```elixir
+  iex> {:ok, pid} = NanNoHi.start_link()
+  iex> NanNoHi.import(pid, \"""
+  ...> date,event
+  ...> 2024/1/1,元日
+  ...> Jan 1st 2025,元日
+  ...> \""")
+  {:error, ["Jan 1st 2025"]}
+  ```
+  """
+  @spec import(pid(), events() | String.t()) :: :ok | {:error, term()}
+  defdelegate import(pid, events_or_string), to: Server
+
+  @doc """
+  Looks up events for a given year or date.
+
+  See `lookup/4`.
+  """
+  @spec lookup(pid(), integer() | Date.t()) :: events()
+  def lookup(pid, year_or_date)
+
+  def lookup(pid, %Date{} = date) do
+    {year, month, day} = Date.to_erl(date)
+
+    lookup(pid, year, month, day)
+  end
+
+  defdelegate lookup(pid, year), to: Server
+
+  @doc """
+  Looks up events for a given year and month.
+
+  See `lookup/4`.
+  """
+  @spec lookup(pid(), year(), month()) :: events()
+  defdelegate lookup(pid, year, month), to: Server
+
+  @doc """
+  Looks up events for a specific date.
+
+  ## Examples
+
+  ```elixir
+  iex> {:ok, pid} = NanNoHi.start_link()
+  iex> NanNoHi.import(pid, [
+  ...>   {~D[2025-01-01], "元日"},
+  ...>   {~D[2025-05-03], "憲法記念日"},
+  ...>   {~D[2025-05-05], "こどもの日"}
+  ...> ])
+  iex> NanNoHi.lookup(pid, 2025)
+  [{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
+  iex> NanNoHi.lookup(pid, 2025, 5)
+  [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
+  iex> NanNoHi.lookup(pid, 2025, 5, 5)
+  [{~D[2025-05-05], "こどもの日"}]
+  ```
   """
   @spec lookup(pid(), year(), month(), day()) :: events()
   defdelegate lookup(pid, year, month, day), to: Server
 
   @doc """
-  Looks all events up.
+  Looks up all events.
 
   ## Examples
 
