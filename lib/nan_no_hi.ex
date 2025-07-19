@@ -23,7 +23,7 @@ defmodule NanNoHi do
 
   See `lookup/4`.
   """
-  @spec lookup(pid(), integer() | Date.t()) :: [{Date.t(), event()}]
+  @spec lookup(pid(), integer() | Date.t()) :: events()
   def lookup(pid, year_or_date)
 
   def lookup(pid, %Date{} = date) do
@@ -39,7 +39,7 @@ defmodule NanNoHi do
 
   See `lookup/4`.
   """
-  @spec lookup(pid(), year(), month()) :: [{Date.t(), event()}]
+  @spec lookup(pid(), year(), month()) :: events()
   defdelegate lookup(pid, year, month), to: Server
 
   @doc """
@@ -82,8 +82,25 @@ defmodule NanNoHi do
   [{~D[2025-05-05], "こどもの日"}]
   ```
   """
-  @spec lookup(pid(), year(), month(), day()) :: [{Date.t(), event()}]
+  @spec lookup(pid(), year(), month(), day()) :: events()
   defdelegate lookup(pid, year, month, day), to: Server
+
+  @doc """
+  Looks all events up.
+
+  ### Examples
+
+  ```elixir
+  iex> {:ok, pid} = NanNoHi.start_link()
+  iex> NanNoHi.append(pid, 2023, 1, 1, "元日")
+  iex> NanNoHi.append(pid, 2024, 1, 1, "元日")
+  iex> NanNoHi.append(pid, 2025, 1, 1, "元日")
+  iex> NanNoHi.lookup_all(pid)
+  [{~D[2023-01-01], "元日"}, {~D[2024-01-01], "元日"}, {~D[2025-01-01], "元日"}]
+  ```
+  """
+  @spec lookup_all(pid()) :: events()
+  defdelegate lookup_all(pid), to: Server
 
   @doc """
   Appends a new event.
@@ -105,4 +122,7 @@ defmodule NanNoHi do
 
   @spec import(pid(), events()) :: :ok | {:error, term()}
   defdelegate import(pid, events), to: Server
+
+  @spec clear(pid()) :: :ok
+  defdelegate clear(pid), to: Server
 end
