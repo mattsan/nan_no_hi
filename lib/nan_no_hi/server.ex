@@ -32,21 +32,24 @@ defmodule NanNoHi.Server do
     GenServer.call(pid, {:import, events})
   end
 
-  @spec lookup(pid(), NanNoHi.year()) :: [{Date.t(), NanNoHi.event()}]
+  @spec lookup(pid(), NanNoHi.year()) :: NanNoHi.events()
   def lookup(pid, year) when is_date(year) do
     GenServer.call(pid, {:lookup, year})
   end
 
-  @spec lookup(pid(), NanNoHi.year(), NanNoHi.month()) :: [{Date.t(), NanNoHi.event()}]
+  @spec lookup(pid(), NanNoHi.year(), NanNoHi.month()) :: NanNoHi.events()
   def lookup(pid, year, month) when is_date(year, month) do
     GenServer.call(pid, {:lookup, year, month})
   end
 
-  @spec lookup(pid(), NanNoHi.year(), NanNoHi.month(), NanNoHi.day()) :: [
-          {Date.t(), NanNoHi.event()}
-        ]
+  @spec lookup(pid(), NanNoHi.year(), NanNoHi.month(), NanNoHi.day()) :: NanNoHi.events()
   def lookup(pid, year, month, day) when is_date(year, month, day) do
     GenServer.call(pid, {:lookup, year, month, day})
+  end
+
+  @spec lookup_all(pid()) :: NanNoHi.events()
+  def lookup_all(pid) do
+    GenServer.call(pid, :lookup_all)
   end
 
   @spec clear(pid()) :: :ok
@@ -124,6 +127,13 @@ defmodule NanNoHi.Server do
     :ets.delete_all_objects(state.table)
 
     {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_call(:lookup_all, _from, state) do
+    events = lookup_dates(state.table, :_, :_, :_)
+
+    {:reply, events, state}
   end
 
   defp import_events(events, table) do
