@@ -1,6 +1,6 @@
 # NanNoHi
 
-**TODO: Add description**
+NanNoHi ( 何の日？ *What day is it?* ) is a dictionary of dates that allows you to search for holidays, anniversaries and other notable days.
 
 ## Installation
 
@@ -19,3 +19,32 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/nan_no_hi>.
 
+## Examples
+
+```elixir
+# start server
+{:ok, pid} = NanNoHi.start_link()
+
+# import CSV
+NanNoHi.import(pid, """
+date,event
+2025/1/1,元日
+2025/5/3,憲法記念日
+2025/5/5,こどもの日
+""")
+
+# look up year
+NanNoHi.lookup(pid, 2025)
+[{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
+
+# look up year and month
+NanNoHi.lookup(pid, 2025, 5)
+[{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
+
+# look up the date
+NanNoHi.lookup(pid, 2025, 5, 5)
+[{~D[2025-05-05], "こどもの日"}]
+
+NanNoHi.lookup(pid, ~D[2025-01-01])
+[{~D[2025-01-01], "元日"}]
+```

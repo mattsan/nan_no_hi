@@ -1,6 +1,35 @@
 defmodule NanNoHi.Server do
   @moduledoc """
-  A server of NanNoHi.
+  Server module for NanNoHi.
+
+  ## Examples
+
+  Start the NanNoHi server as part of your application supervision tree:
+
+  ```elixir
+  defmodule MyApp.Application do
+    @moduledoc false
+
+    use Application
+
+    @impl true
+    def start(_type, _args) do
+      children = [
+        {NanNoHi.Server, name: JapaneseHoliday}
+      ]
+
+      opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+      Supervisor.start_link(children, opts)
+    end
+  end
+  ```
+
+  Looks up.
+
+  ```elixir
+  NanNoHi.lookup(JapaneseHoliday, 2025)
+  #=> [{~D[2025-01-01], "元日"}, ...]
+  ```
   """
   use GenServer
 
@@ -21,15 +50,15 @@ defmodule NanNoHi.Server do
     GenServer.start_link(__MODULE__, server_options, gen_server_options)
   end
 
-  @spec append(pid(), NanNoHi.year(), NanNoHi.month(), NanNoHi.day(), NanNoHi.event()) ::
+  @spec append(pid(), NanNoHi.year(), NanNoHi.month(), NanNoHi.day(), term()) ::
           :ok | {:error, term()}
-  def append(pid, year, month, day, event) when is_date(year, month, day) do
-    GenServer.call(pid, {:append, year, month, day, event})
+  def append(pid, year, month, day, description) when is_date(year, month, day) do
+    GenServer.call(pid, {:append, year, month, day, description})
   end
 
-  @spec import(pid(), NanNoHi.events()) :: :ok | {:error, term()}
-  def import(pid, events) do
-    GenServer.call(pid, {:import, events})
+  @spec import(pid(), NanNoHi.events() | String.t()) :: :ok | {:error, term()}
+  def import(pid, events_or_string) do
+    GenServer.call(pid, {:import, events_or_string})
   end
 
   @spec lookup(pid(), NanNoHi.year()) :: NanNoHi.events()
@@ -66,8 +95,8 @@ defmodule NanNoHi.Server do
   end
 
   @impl true
-  def handle_call({:append, year, month, day, event}, _from, state) do
-    :ets.insert(state.table, {{year, month, day}, event})
+  def handle_call({:append, year, month, day, description}, _from, state) do
+    :ets.insert(state.table, {{year, month, day}, description})
 
     {:reply, :ok, state}
   end
@@ -81,12 +110,12 @@ defmodule NanNoHi.Server do
   end
 
   @impl true
-  def handle_call({:import, events}, _from, state) when is_binary(events) do
-    events
+  def handle_call({:import, string}, _from, state) when is_binary(string) do
+    string
     |> CsvParser.parse_string()
-    |> Enum.map(fn [string_date, event] ->
+    |> Enum.map(fn [string_date, description] ->
       case string_to_erl_date(string_date) do
-        {:ok, date} -> {:ok, {date, event}}
+        {:ok, date} -> {:ok, {date, description}}
         {:error, _} = error -> error
       end
     end)
@@ -103,21 +132,21 @@ defmodule NanNoHi.Server do
 
   @impl true
   def handle_call({:lookup, year}, _from, state) do
-    result = lookup_dates(state.table, year, :_, :_)
+    result = lookup_events(state.table, year, :_, :_)
 
     {:reply, result, state}
   end
 
   @impl true
   def handle_call({:lookup, year, month}, _from, state) do
-    result = lookup_dates(state.table, year, month, :_)
+    result = lookup_events(state.table, year, month, :_)
 
     {:reply, result, state}
   end
 
   @impl true
   def handle_call({:lookup, year, month, day}, _from, state) do
-    result = lookup_dates(state.table, year, month, day)
+    result = lookup_events(state.table, year, month, day)
 
     {:reply, result, state}
   end
@@ -131,21 +160,25 @@ defmodule NanNoHi.Server do
 
   @impl true
   def handle_call(:lookup_all, _from, state) do
-    events = lookup_dates(state.table, :_, :_, :_)
+    events = lookup_events(state.table, :_, :_, :_)
 
     {:reply, events, state}
   end
 
   defp import_events(events, table) do
     events
-    |> Enum.each(fn {date, event} ->
-      :ets.insert(table, {date, event})
+    |> Enum.each(fn event ->
+      case event do
+        {%Date{} = date, description} -> {{date.year, date.month, date.day}, description}
+        {{_, _, _}, _} = event -> event
+      end
+      |> then(&:ets.insert(table, &1))
     end)
   end
 
-  defp lookup_dates(table, year, month, day) do
+  defp lookup_events(table, year, month, day) do
     :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
     |> Enum.sort()
-    |> Enum.map(fn {erl_date, event} -> {Date.from_erl!(erl_date), event} end)
+    |> Enum.map(fn {erl_date, description} -> {Date.from_erl!(erl_date), description} end)
   end
 end

@@ -6,7 +6,7 @@ defmodule NanNoHi.Utils do
   @doc """
   Converts the given string to an Erlang date tuple.
 
-  ### Examples
+  ## Examples
 
   ```
   iex> NanNoHi.Utils.string_to_erl_date("2025-01-01")
