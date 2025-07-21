@@ -1,6 +1,35 @@
 defmodule NanNoHi.Server do
   @moduledoc """
-  A server of NanNoHi.
+  Server module for NanNoHi.
+
+  ## Examples
+
+  Start the NanNoHi server as part of your application supervision tree:
+
+  ```elixir
+  defmodule MyApp.Application do
+    @moduledoc false
+
+    use Application
+
+    @impl true
+    def start(_type, _args) do
+      children = [
+        {NanNoHi.Server, name: JapaneseHoliday}
+      ]
+
+      opts = [strategy: :one_for_one, name: MyApp.Supervisor]
+      Supervisor.start_link(children, opts)
+    end
+  end
+  ```
+
+  Looks up.
+
+  ```elixir
+  NanNoHi.lookup(JapaneseHoliday, 2025)
+  #=> [{~D[2025-01-01], "元日"}, ...]
+  ```
   """
   use GenServer
 
