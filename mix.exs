@@ -8,7 +8,9 @@ defmodule NanNoHi.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      docs: docs()
+      docs: docs(),
+      description: description(),
+      package: package()
     ]
   end
 
@@ -36,6 +38,17 @@ defmodule NanNoHi.MixProject do
       groups_for_docs: [
         Guards: &(&1[:guard] == true)
       ]
+    ]
+  end
+
+  defp description do
+    "NanNoHi is a dictionary of dates that allows you to search for holidays, anniversaries and other notable days."
+  end
+
+  defp package do
+    [
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/mattsan/nan_no_hi"}
     ]
   end
 end
