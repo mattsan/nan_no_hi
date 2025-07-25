@@ -3,6 +3,34 @@ defmodule NanNoHi.Utils do
   Utilities.
   """
 
+  NimbleCSV.define(CsvParser, [])
+
+  @spec parse_input(list() | String.t()) :: {:ok, NanNoHi.events()} | {:error, term()}
+  def parse_input(input)
+
+  def parse_input(input) when is_list(input) do
+    {:ok, input}
+  end
+
+  def parse_input(input) when is_binary(input) do
+    input
+    |> CsvParser.parse_string()
+    |> Enum.map(fn [string_date, description] ->
+      case string_to_erl_date(string_date) do
+        {:ok, date} -> {:ok, {date, description}}
+        {:error, _} = error -> error
+      end
+    end)
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    |> then(fn
+      %{error: errors} ->
+        {:error, errors}
+
+      %{ok: events} ->
+        {:ok, events}
+    end)
+  end
+
   @doc """
   Converts the given string to an Erlang date tuple.
 

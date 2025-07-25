@@ -37,9 +37,7 @@ defmodule NanNoHi.Server do
   defguard is_date(year, month) when is_date(year) and month in 1..12
   defguard is_date(year, month, day) when is_date(year, month) and day in 1..31
 
-  NimbleCSV.define(CsvParser, [])
-
-  import NanNoHi.Utils, only: [string_to_erl_date: 1]
+  import NanNoHi.Utils, only: [parse_input: 1]
 
   @server_option_keys []
 
@@ -102,32 +100,14 @@ defmodule NanNoHi.Server do
   end
 
   @impl true
-  def handle_call({:import, events}, _from, state) when is_list(events) do
-    events
-    |> import_events(state.table)
-
-    {:reply, :ok, state}
-  end
-
-  @impl true
-  def handle_call({:import, string}, _from, state) when is_binary(string) do
-    string
-    |> CsvParser.parse_string()
-    |> Enum.map(fn [string_date, description] ->
-      case string_to_erl_date(string_date) do
-        {:ok, date} -> {:ok, {date, description}}
-        {:error, _} = error -> error
-      end
-    end)
-    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-    |> then(fn
-      %{error: errors} ->
-        {:reply, {:error, errors}, state}
-
-      %{ok: events} ->
-        import_events(events, state.table)
-        {:reply, :ok, state}
-    end)
+  def handle_call({:import, input}, _from, state) do
+    with {:ok, events} <- parse_input(input) do
+      import_events(events, state.table)
+      {:reply, :ok, state}
+    else
+      error ->
+        {:reply, error, state}
+    end
   end
 
   @impl true
