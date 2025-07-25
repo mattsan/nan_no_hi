@@ -16,7 +16,9 @@ defmodule NanNoHi do
   Starts NanNoHi server.
   """
   @spec start_link(options()) :: GenServer.on_start()
-  defdelegate start_link(options \\ []), to: Server
+  def start_link(options \\ []) do
+    Server.start_link(options)
+  end
 
   @doc """
   Appends a new event using a `Date.t()` and description.
@@ -36,7 +38,9 @@ defmodule NanNoHi do
   Appends a new event.
   """
   @spec append(pid(), year(), month(), day(), term()) :: :ok
-  defdelegate append(pid, year, month, day, description), to: Server
+  def append(pid, year, month, day, description) do
+    Server.append(pid, year, month, day, description)
+  end
 
   @doc """
   Imports multiple events from a list or a CSV string.
@@ -97,7 +101,9 @@ defmodule NanNoHi do
   ```
   """
   @spec import(pid(), events() | String.t()) :: :ok | {:error, term()}
-  defdelegate import(pid, events_or_string), to: Server
+  def import(pid, events_or_string) do
+    Server.import(pid, events_or_string)
+  end
 
   @doc """
   Looks up events for a given year or date.
@@ -113,7 +119,9 @@ defmodule NanNoHi do
     lookup(pid, year, month, day)
   end
 
-  defdelegate lookup(pid, year), to: Server
+  def lookup(pid, year) do
+    Server.lookup(pid, year)
+  end
 
   @doc """
   Looks up events for a given year and month.
@@ -121,7 +129,9 @@ defmodule NanNoHi do
   See `lookup/4`.
   """
   @spec lookup(pid(), year(), month()) :: events()
-  defdelegate lookup(pid, year, month), to: Server
+  def lookup(pid, year, month) do
+    Server.lookup(pid, year, month)
+  end
 
   @doc """
   Looks up events for a specific date.
@@ -144,7 +154,9 @@ defmodule NanNoHi do
   ```
   """
   @spec lookup(pid(), year(), month(), day()) :: events()
-  defdelegate lookup(pid, year, month, day), to: Server
+  def lookup(pid, year, month, day) do
+    Server.lookup(pid, year, month, day)
+  end
 
   @doc """
   Looks up all events.
@@ -161,11 +173,15 @@ defmodule NanNoHi do
   ```
   """
   @spec lookup_all(pid()) :: events()
-  defdelegate lookup_all(pid), to: Server
+  def lookup_all(pid) do
+    Server.lookup_all(pid)
+  end
 
   @doc """
   Clears all events.
   """
   @spec clear(pid()) :: :ok
-  defdelegate clear(pid), to: Server
+  def clear(pid) do
+    Server.clear(pid)
+  end
 end
