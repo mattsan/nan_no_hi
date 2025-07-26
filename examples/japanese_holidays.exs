@@ -67,7 +67,7 @@ defmodule JapaneseHolidays do
     else
       # Download CSV (raw mode to handle binary data)
       # Convert from Shift_JIS (cp932) to UTF-8 encoding
-      csv = uri |> Req.get!(raw: true) |> then(&shift_jis_to_utf8(&1.body))
+      csv = uri |> Req.get!(raw: true) |> Map.get(:body) |> shift_jis_to_utf8()
 
       # Cache the file locally
       File.write!(filename, csv)
