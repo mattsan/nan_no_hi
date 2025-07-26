@@ -15,7 +15,7 @@ defmodule NanNoHi do
   defguardp is_date(year, month, day) when is_date(year, month) and day in 1..31
 
   @doc """
-  Starts NanNoHi server.
+  Creates new table.
   """
   @spec new(list()) :: :ets.table()
   def new(opts \\ []) when is_list(opts) do
