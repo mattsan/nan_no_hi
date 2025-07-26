@@ -5,11 +5,11 @@ defmodule NanNoHi.UtilsTest do
 
   doctest Utils
 
-  describe "parse_input/1 with valid list" do
-    import Utils, only: [parse_input: 1]
+  describe "import_list/1 with valid list" do
+    import Utils, only: [import_list: 1]
 
     test "empty list" do
-      assert {:ok, []} == parse_input([])
+      assert {:ok, []} == import_list([])
     end
 
     test "Erlang date tuple" do
@@ -27,7 +27,7 @@ defmodule NanNoHi.UtilsTest do
         {{2025, 5, 5}, "子供の日"}
       ]
 
-      assert {:ok, expected} == parse_input(input)
+      assert {:ok, expected} == import_list(input)
     end
 
     test "Date struct" do
@@ -45,19 +45,47 @@ defmodule NanNoHi.UtilsTest do
         {{2025, 5, 5}, "子供の日"}
       ]
 
-      assert {:ok, expected} == parse_input(input)
+      assert {:ok, expected} == import_list(input)
     end
   end
 
-  describe "parse_input/1 with valid string" do
-    import Utils, only: [parse_input: 1]
+  describe "import_list/1 with invalid list" do
+    import Utils, only: [import_list: 1]
+
+    test "includes invalid date format" do
+      input = [
+        {{2021, 1, 1}, "元日"},
+        {"Jan 1st 2022", "元日"},
+        {{2023, 1, 1}, "元日"},
+        {"Jan 1st 2024", "元日"},
+        {{2025, 1, 1}, "元日"}
+      ]
+
+      assert {:error, ["Jan 1st 2022", "Jan 1st 2024"]} == import_list(input)
+    end
+
+    test "includes invalid tuples" do
+      input = [
+        {{2021, 1, 1}, "元日"},
+        {{2022, 1, 1}},
+        {{2023, 1, 1}, "元日"},
+        {{2024, 1, 1}, "元日", :leap_year},
+        {{2025, 1, 1}, "元日"}
+      ]
+
+      assert {:error, [{{2022, 1, 1}}, {{2024, 1, 1}, "元日", :leap_year}]} == import_list(input)
+    end
+  end
+
+  describe "import_csv/1 with valid string" do
+    import Utils, only: [import_csv: 1]
 
     test "empty string" do
-      assert {:ok, []} == parse_input("")
+      assert {:ok, []} == import_csv("")
     end
 
     test "only header row" do
-      assert {:ok, []} == parse_input("date,event")
+      assert {:ok, []} == import_csv("date,event")
     end
 
     test "one day" do
@@ -76,40 +104,12 @@ defmodule NanNoHi.UtilsTest do
         {{2025, 5, 5}, "子供の日"}
       ]
 
-      assert {:ok, expected} == parse_input(input)
+      assert {:ok, expected} == import_csv(input)
     end
   end
 
-  describe "parse_input/1 with invalid list" do
-    import Utils, only: [parse_input: 1]
-
-    test "includes invalid date format" do
-      input = [
-        {{2021, 1, 1}, "元日"},
-        {"Jan 1st 2022", "元日"},
-        {{2023, 1, 1}, "元日"},
-        {"Jan 1st 2024", "元日"},
-        {{2025, 1, 1}, "元日"}
-      ]
-
-      assert {:error, ["Jan 1st 2022", "Jan 1st 2024"]} == parse_input(input)
-    end
-
-    test "includes invalid tuples" do
-      input = [
-        {{2021, 1, 1}, "元日"},
-        {{2022, 1, 1}},
-        {{2023, 1, 1}, "元日"},
-        {{2024, 1, 1}, "元日", :leap_year},
-        {{2025, 1, 1}, "元日"}
-      ]
-
-      assert {:error, [{{2022, 1, 1}}, {{2024, 1, 1}, "元日", :leap_year}]} == parse_input(input)
-    end
-  end
-
-  describe "parse_input/1 with invalid string" do
-    import Utils, only: [parse_input: 1]
+  describe "import_csv/1 with invalid string" do
+    import Utils, only: [import_csv: 1]
 
     test "includes invalid date format" do
       input = """
@@ -121,7 +121,7 @@ defmodule NanNoHi.UtilsTest do
       2025/1/1,元日
       """
 
-      assert {:error, ["Jan 1st 2022", "Jan 1st 2024"]} == parse_input(input)
+      assert {:error, ["Jan 1st 2022", "Jan 1st 2024"]} == import_csv(input)
     end
 
     test "includes invalid rows" do
@@ -134,7 +134,7 @@ defmodule NanNoHi.UtilsTest do
       2025/1/1,元日
       """
 
-      assert {:error, [["2022/1/1"], ["2024/1/1", "元日", "leap_year"]]} == parse_input(input)
+      assert {:error, [["2022/1/1"], ["2024/1/1", "元日", "leap_year"]]} == import_csv(input)
     end
   end
 

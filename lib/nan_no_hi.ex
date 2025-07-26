@@ -3,6 +3,8 @@ defmodule NanNoHi do
   An interface for NanNoHi.
   """
 
+  alias NanNoHi.Utils
+
   @type year :: pos_integer()
   @type month :: 1..12
   @type day :: 1..31
@@ -106,26 +108,20 @@ defmodule NanNoHi do
   ```
   """
   @spec import(:ets.table(), events() | String.t()) :: :ok | {:error, term()}
-  def import(table, events_or_string) do
-    case NanNoHi.Utils.parse_input(events_or_string) do
+  def import(table, input) when is_list(input) or is_binary(input) do
+    cond do
+      is_list(input) -> Utils.import_list(input)
+      is_binary(input) -> Utils.import_csv(input)
+    end
+    |> case do
       {:ok, events} ->
-        import_events(events, table)
+        Enum.each(events, &:ets.insert(table, &1))
+
         :ok
 
       error ->
         error
     end
-  end
-
-  defp import_events(events, table) do
-    events
-    |> Enum.each(fn event ->
-      case event do
-        {%Date{} = date, description} -> {{date.year, date.month, date.day}, description}
-        {{_, _, _}, _} = event -> event
-      end
-      |> then(&:ets.insert(table, &1))
-    end)
   end
 
   @doc """

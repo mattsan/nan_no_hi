@@ -3,44 +3,33 @@ defmodule NanNoHi.Utils do
   Utilities.
   """
 
-  NimbleCSV.define(CsvParser, [])
+  NimbleCSV.define(CsvParser, moduledoc: false)
 
   defguardp is_pos_int(n) when is_integer(n) and n > 0
 
   @doc """
-  Parses input.
+  Parses list.
 
-  ### Examples
+  ## Examples
 
   ```elixir
-  iex> NanNoHi.Utils.parse_input(\"""
-  ...> date,event
-  ...> 2025/01/01,元日
-  ...> 2025/05/05,子供の日
-  ...> \""")
+  iex> NanNoHi.Utils.import_list([
+  ...>   {{2025, 1, 1}, "元日"},
+  ...>   {{2025, 5, 5}, "子供の日"}
+  ...> ])
+  {:ok, [{{2025, 1, 1}, "元日"}, {{2025, 5, 5}, "子供の日"}]}
+  ```
+
+  ```elixir
+  iex> NanNoHi.Utils.import_list([
+  ...>   {~D[2025-01-01], "元日"},
+  ...>   {~D[2025-05-05], "子供の日"}
+  ...> ])
   {:ok, [{{2025, 1, 1}, "元日"}, {{2025, 5, 5}, "子供の日"}]}
   ```
   """
-  @spec parse_input(list() | String.t()) :: {:ok, NanNoHi.events()} | {:error, term()}
-  def parse_input(input)
-
-  def parse_input(input) do
-    input
-    |> validate()
-    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-    |> then(fn
-      %{error: errors} ->
-        {:error, errors}
-
-      %{ok: events} ->
-        {:ok, events}
-
-      _ ->
-        {:ok, []}
-    end)
-  end
-
-  defp validate(input) when is_list(input) do
+  @spec import_list(list()) :: {:ok, NanNoHi.events()} | {:error, term()}
+  def import_list(input) when is_list(input) do
     input
     |> Enum.map(fn
       {%Date{} = date, description} ->
@@ -59,9 +48,25 @@ defmodule NanNoHi.Utils do
       another ->
         {:error, another}
     end)
+    |> split_errors()
   end
 
-  defp validate(input) when is_binary(input) do
+  @doc """
+  Parses CSV.
+
+  ## Examples
+
+  ```elixir
+  iex> NanNoHi.Utils.import_csv(\"""
+  ...> date,event
+  ...> 2025/01/01,元日
+  ...> 2025/05/05,子供の日
+  ...> \""")
+  {:ok, [{{2025, 1, 1}, "元日"}, {{2025, 5, 5}, "子供の日"}]}
+  ```
+  """
+  @spec import_csv(String.t()) :: {:ok, NanNoHi.events()} | {:error, term()}
+  def import_csv(input) when is_binary(input) do
     input
     |> CsvParser.parse_string()
     |> Enum.map(fn
@@ -73,6 +78,43 @@ defmodule NanNoHi.Utils do
 
       invalid_row ->
         {:error, invalid_row}
+    end)
+    |> split_errors()
+  end
+
+  @doc """
+  Splits errors if the list includes errors.
+
+  ## Examples
+
+  ```elixir
+  iex> NanNoHi.Utils.split_errors([ok: "A", ok: "B", ok: "C", ok: "D"])
+  {:ok, ["A", "B", "C", "D"]}
+  ```
+
+  ```elixir
+  iex> NanNoHi.Utils.split_errors([ok: "A", error: "B", ok: "C", error: "D"])
+  {:error, ["B", "D"]}
+  ```
+
+  ```elixir
+  iex> NanNoHi.Utils.split_errors([])
+  {:ok, []}
+  ```
+  """
+  @spec split_errors([{:ok | :error, term()}]) :: {:ok, [term()]} | {:error, [term()]}
+  def split_errors(result) do
+    result
+    |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
+    |> then(fn
+      %{error: errors} ->
+        {:error, errors}
+
+      %{ok: events} ->
+        {:ok, events}
+
+      _ ->
+        {:ok, []}
     end)
   end
 
