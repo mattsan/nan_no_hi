@@ -55,7 +55,7 @@ defmodule NanNoHi.Utils do
       another ->
         {:error, another}
     end)
-    |> split_errors()
+    |> collect_results()
   end
 
   @doc """
@@ -91,7 +91,7 @@ defmodule NanNoHi.Utils do
       invalid_row ->
         {:error, invalid_row}
     end)
-    |> split_errors()
+    |> collect_results()
   end
 
   @doc """
@@ -104,22 +104,22 @@ defmodule NanNoHi.Utils do
   ## Examples
 
   ```elixir
-  iex> NanNoHi.Utils.split_errors([ok: "A", ok: "B", ok: "C", ok: "D"])
+  iex> NanNoHi.Utils.collect_results([ok: "A", ok: "B", ok: "C", ok: "D"])
   {:ok, ["A", "B", "C", "D"]}
   ```
 
   ```elixir
-  iex> NanNoHi.Utils.split_errors([ok: "A", error: "B", ok: "C", error: "D"])
+  iex> NanNoHi.Utils.collect_results([ok: "A", error: "B", ok: "C", error: "D"])
   {:error, ["B", "D"]}
   ```
 
   ```elixir
-  iex> NanNoHi.Utils.split_errors([])
+  iex> NanNoHi.Utils.collect_results([])
   {:ok, []}
   ```
   """
-  @spec split_errors([{:ok | :error, term()}]) :: {:ok, [term()]} | {:error, [term()]}
-  def split_errors(result) do
+  @spec collect_results([{:ok | :error, term()}]) :: {:ok, [term()]} | {:error, [term()]}
+  def collect_results(result) do
     result
     |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
     |> then(fn

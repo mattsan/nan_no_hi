@@ -175,4 +175,70 @@ defmodule NanNoHi.UtilsTest do
     test "2025-01", do: assert({:error, "2025-01"} == string_to_erl_date("2025-01"))
     test "abc", do: assert({:error, "abc"} == string_to_erl_date("abc"))
   end
+
+  describe "collect_results/1" do
+    import Utils, only: [collect_results: 1]
+
+    test "all success" do
+      input = [{:ok, "A"}, {:ok, "B"}, {:ok, "C"}, {:ok, "D"}]
+
+      assert {:ok, ["A", "B", "C", "D"]} == collect_results(input)
+    end
+
+    test "all errors" do
+      input = [{:error, "E1"}, {:error, "E2"}, {:error, "E3"}]
+
+      assert {:error, ["E1", "E2", "E3"]} == collect_results(input)
+    end
+
+    test "mixed success and errors" do
+      input = [{:ok, "A"}, {:error, "E1"}, {:ok, "B"}, {:error, "E2"}]
+
+      assert {:error, ["E1", "E2"]} == collect_results(input)
+    end
+
+    test "empty list" do
+      assert {:ok, []} == collect_results([])
+    end
+
+    test "single success" do
+      assert {:ok, ["value"]} == collect_results([{:ok, "value"}])
+    end
+
+    test "single error" do
+      assert {:error, ["reason"]} == collect_results([{:error, "reason"}])
+    end
+
+    test "preserves order of values when all success" do
+      input = [{:ok, 1}, {:ok, 2}, {:ok, 3}, {:ok, 4}, {:ok, 5}]
+
+      assert {:ok, [1, 2, 3, 4, 5]} == collect_results(input)
+    end
+
+    test "preserves order of errors when mixed" do
+      input = [{:ok, 1}, {:error, :e1}, {:ok, 2}, {:error, :e2}, {:error, :e3}]
+
+      assert {:error, [:e1, :e2, :e3]} == collect_results(input)
+    end
+
+    test "works with various data types" do
+      input = [
+        {:ok, %{key: "value"}},
+        {:ok, [1, 2, 3]},
+        {:ok, :atom},
+        {:ok, "string"},
+        {:ok, 42}
+      ]
+
+      expected = [%{key: "value"}, [1, 2, 3], :atom, "string", 42]
+
+      assert {:ok, expected} == collect_results(input)
+    end
+
+    test "works with keyword list syntax" do
+      input = [ok: "A", ok: "B", error: "E1", ok: "C", error: "E2"]
+
+      assert {:error, ["E1", "E2"]} == collect_results(input)
+    end
+  end
 end
