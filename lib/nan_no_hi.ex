@@ -20,8 +20,8 @@ defmodule NanNoHi do
   Creates new table.
   """
   @spec new(list()) :: :ets.table()
-  def new(opts \\ []) when is_list(opts) do
-    name = Keyword.get(opts, :name, __MODULE__)
+  def new(options \\ []) when is_list(options) do
+    name = Keyword.get(options, :name, __MODULE__)
     :ets.new(name, [:bag])
   end
 
