@@ -48,3 +48,7 @@ NanNoHi.lookup(table, 2025, 5, 5)
 NanNoHi.lookup(table, ~D[2025-01-01])
 [{~D[2025-01-01], "元日"}]
 ```
+
+### National Holidays in Japan
+
+An example of retrieving national holidays in Japan is available at `examples/japanese_holidays.exs` or on [the GitHub repository](https://github.com/mattsan/nan_no_hi/blob/main/examples/japanese_holidays.exs).
