@@ -177,15 +177,15 @@ defmodule NanNoHiTest do
     end
 
     test "invalid year value", %{table: table} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, "2025", 1, 1, "invalid") end)
+      assert {:error, :invalid_date} == NanNoHi.append(table, "2025", 1, 1, "invalid")
     end
 
     test "invalid month value", %{table: table} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, 2025, 13, 1, "invalid") end)
+      assert {:error, :invalid_date} == NanNoHi.append(table, 2025, 13, 1, "invalid")
     end
 
     test "invalid day value", %{table: table} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, 2025, 1, 32, "invalid") end)
+      assert {:error, :invalid_date} == NanNoHi.append(table, 2025, 1, 32, "invalid")
     end
   end
 
