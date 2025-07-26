@@ -1,5 +1,18 @@
 # Japanese Holidays
 #
+# This is an Elixir script to display Japanese holidays.
+#
+# Usage:
+#   # Show all holidays in 2025
+#   $ elixir examples/japanese_holidays.exs 2025
+#
+#   # Show all holidays in January 2025
+#   $ elixir examples/japanese_holidays.exs 2025 1
+#
+#   # Show the holiday on January 1st, 2025
+#   $ elixir examples/japanese_holidays.exs 2025 1 1
+#
+# See also:
 # - [「国民の祝日」について - 内閣府](https://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html) (About "National Holidays" - Cabinet Office) (Japanese)
 # - [CSV data](https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv) (from 1955 to the next year)
 
