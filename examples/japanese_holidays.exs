@@ -48,24 +48,24 @@ defmodule JapaneseHolidays do
 
   # Initialize GenServer state with holidays data
   def init(csv) do
-    state = NanNoHi.new(name: __MODULE__)
+    nan_no_hi = NanNoHi.new(name: __MODULE__)
 
     # Import CSV data
-    NanNoHi.import(state, csv)
+    NanNoHi.import(nan_no_hi, csv)
 
-    {:ok, state}
+    {:ok, nan_no_hi}
   end
 
   # Handle lookup requests based on date granularity
-  def handle_call({:lookup, date}, _from, state) do
+  def handle_call({:lookup, date}, _from, nan_no_hi) do
     result =
       case date do
-        {year} -> NanNoHi.lookup(state, year)
-        {year, month} -> NanNoHi.lookup(state, year, month)
-        {year, month, day} -> NanNoHi.lookup(state, year, month, day)
+        {year} -> NanNoHi.lookup(nan_no_hi, year)
+        {year, month} -> NanNoHi.lookup(nan_no_hi, year, month)
+        {year, month, day} -> NanNoHi.lookup(nan_no_hi, year, month, day)
       end
 
-    {:reply, result, state}
+    {:reply, result, nan_no_hi}
   end
 
   # Fetch Japanese holidays CSV data from Cabinet Office website

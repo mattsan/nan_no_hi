@@ -3,8 +3,11 @@ defmodule NanNoHi do
   An interface for NanNoHi.
   """
 
+  defstruct [:table]
+
+  @opaque t() :: %__MODULE__{table: :ets.table()}
+
   alias NanNoHi.Import
-  alias NanNoHi.State
 
   @type year :: pos_integer()
   @type month :: 1..12
@@ -18,35 +21,35 @@ defmodule NanNoHi do
   defguardp is_date(year, month, day) when is_date(year, month) and day in 1..31
 
   @doc """
-  Creates new table.
+  Creates new object.
   """
-  @spec new(list()) :: State.t()
+  @spec new(list()) :: t()
   def new(options \\ []) when is_list(options) do
     name = Keyword.get(options, :name, __MODULE__)
     table = :ets.new(name, [:bag])
-    State.new(table: table)
+    %__MODULE__{table: table}
   end
 
   @doc """
   Appends a new event using a `Date.t()` and description.
 
-  `append(table, ~D[2025-07-15], "Tuesday")` is equivalent to `append(table, 2025, 7, 15, "Tuesday")`.
+  `append(nan_no_hi, ~D[2025-07-15], "Tuesday")` is equivalent to `append(nan_no_hi, 2025, 7, 15, "Tuesday")`.
 
   See `append/5` for the version that takes year, month, day, and description separately.
 
   ## Examples
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.append(table, ~D[2025-01-01], "元日")
-  iex> NanNoHi.append(table, ~D[2025-05-05], "こどもの日")
-  iex> NanNoHi.lookup(table, 2025)
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.append(nan_no_hi, ~D[2025-01-01], "元日")
+  iex> NanNoHi.append(nan_no_hi, ~D[2025-05-05], "こどもの日")
+  iex> NanNoHi.lookup(nan_no_hi, 2025)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-05], "こどもの日"}]
   ```
   """
-  @spec append(State.t(), Date.t(), term()) :: :ok
-  def append(%State{} = state, date, description) when is_struct(date, Date) do
-    :ets.insert(state.table, {Date.to_erl(date), description})
+  @spec append(t(), Date.t(), term()) :: :ok
+  def append(%__MODULE__{} = nan_no_hi, date, description) when is_struct(date, Date) do
+    :ets.insert(nan_no_hi.table, {Date.to_erl(date), description})
     :ok
   end
 
@@ -56,29 +59,29 @@ defmodule NanNoHi do
   ## Examples
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.append(table, 2025, 1, 1, "元日")
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.append(nan_no_hi, 2025, 1, 1, "元日")
   :ok
-  iex> NanNoHi.append(table, 2025, 5, 5, "こどもの日")
+  iex> NanNoHi.append(nan_no_hi, 2025, 5, 5, "こどもの日")
   :ok
-  iex> NanNoHi.lookup(table, 2025)
+  iex> NanNoHi.lookup(nan_no_hi, 2025)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-05], "こどもの日"}]
   ```
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.append(table, 2025, 13, 31, "INVALID")
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.append(nan_no_hi, 2025, 13, 31, "INVALID")
   {:error, :invalid_date}
-  iex> NanNoHi.append(table, 2025, 12, 32, "INVALID")
+  iex> NanNoHi.append(nan_no_hi, 2025, 12, 32, "INVALID")
   {:error, :invalid_date}
-  iex> NanNoHi.append(table, 2025, 2, 29, "INVALID")
+  iex> NanNoHi.append(nan_no_hi, 2025, 2, 29, "INVALID")
   {:error, :invalid_date}
   ```
   """
-  @spec append(State.t(), year(), month(), day(), term()) :: :ok | {:error, :invalid_date}
-  def append(%State{} = state, year, month, day, description) do
+  @spec append(t(), year(), month(), day(), term()) :: :ok | {:error, :invalid_date}
+  def append(%__MODULE__{} = nan_no_hi, year, month, day, description) do
     if is_date(year, month, day) && :calendar.valid_date(year, month, day) do
-      :ets.insert(state.table, {{year, month, day}, description})
+      :ets.insert(nan_no_hi.table, {{year, month, day}, description})
       :ok
     else
       {:error, :invalid_date}
@@ -95,47 +98,47 @@ defmodule NanNoHi do
   From a list:
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.import(table, [
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.import(nan_no_hi, [
   ...>   {~D[2025-01-01], "元日"},
   ...>   {~D[2025-05-03], "憲法記念日"},
   ...>   {~D[2025-05-05], "こどもの日"}
   ...> ])
-  iex> NanNoHi.lookup(table, 2025)
+  iex> NanNoHi.lookup(nan_no_hi, 2025)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, 2025, 5)
+  iex> NanNoHi.lookup(nan_no_hi, 2025, 5)
   [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, 2025, 5, 5)
+  iex> NanNoHi.lookup(nan_no_hi, 2025, 5, 5)
   [{~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, ~D[2025-01-01])
+  iex> NanNoHi.lookup(nan_no_hi, ~D[2025-01-01])
   [{~D[2025-01-01], "元日"}]
   ```
 
   From CSV string:
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.import(table, \"""
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.import(nan_no_hi, \"""
   ...> date,event
   ...> 2025/1/1,元日
   ...> 2025/5/3,憲法記念日
   ...> 2025/5/5,こどもの日
   ...> \""")
-  iex> NanNoHi.lookup(table, 2025)
+  iex> NanNoHi.lookup(nan_no_hi, 2025)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, 2025, 5)
+  iex> NanNoHi.lookup(nan_no_hi, 2025, 5)
   [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, 2025, 5, 5)
+  iex> NanNoHi.lookup(nan_no_hi, 2025, 5, 5)
   [{~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, ~D[2025-01-01])
+  iex> NanNoHi.lookup(nan_no_hi, ~D[2025-01-01])
   [{~D[2025-01-01], "元日"}]
   ```
 
   Invalid input:
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.import(table, \"""
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.import(nan_no_hi, \"""
   ...> date,event
   ...> 2024/1/1,元日
   ...> Jan 1st 2025,元日
@@ -143,15 +146,15 @@ defmodule NanNoHi do
   {:error, ["Jan 1st 2025"]}
   ```
   """
-  @spec import(State.t(), events() | String.t()) :: :ok | {:error, term()}
-  def import(%State{} = state, input) when is_list(input) or is_binary(input) do
+  @spec import(t(), events() | String.t()) :: :ok | {:error, term()}
+  def import(%__MODULE__{} = nan_no_hi, input) when is_list(input) or is_binary(input) do
     cond do
       is_list(input) -> Import.import_list(input)
       is_binary(input) -> Import.import_csv(input)
     end
     |> case do
       {:ok, events} ->
-        Enum.each(events, &:ets.insert(state.table, &1))
+        Enum.each(events, &:ets.insert(nan_no_hi.table, &1))
 
         :ok
 
@@ -165,17 +168,17 @@ defmodule NanNoHi do
 
   See `lookup/4`.
   """
-  @spec lookup(State.t(), integer() | Date.t()) :: events()
-  def lookup(state, year_or_date)
+  @spec lookup(t(), integer() | Date.t()) :: events()
+  def lookup(nan_no_hi, year_or_date)
 
-  def lookup(%State{} = state, %Date{} = date) do
+  def lookup(%__MODULE__{} = nan_no_hi, %Date{} = date) do
     {year, month, day} = Date.to_erl(date)
 
-    lookup_events(state, year, month, day)
+    lookup_events(nan_no_hi, year, month, day)
   end
 
-  def lookup(%State{} = state, year) when is_date(year) do
-    lookup_events(state, year, :_, :_)
+  def lookup(%__MODULE__{} = nan_no_hi, year) when is_date(year) do
+    lookup_events(nan_no_hi, year, :_, :_)
   end
 
   @doc """
@@ -183,9 +186,9 @@ defmodule NanNoHi do
 
   See `lookup/4`.
   """
-  @spec lookup(State.t(), year(), month()) :: events()
-  def lookup(%State{} = state, year, month) when is_date(year, month) do
-    lookup_events(state, year, month, :_)
+  @spec lookup(t(), year(), month()) :: events()
+  def lookup(%__MODULE__{} = nan_no_hi, year, month) when is_date(year, month) do
+    lookup_events(nan_no_hi, year, month, :_)
   end
 
   @doc """
@@ -194,23 +197,23 @@ defmodule NanNoHi do
   ## Examples
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.import(table, [
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.import(nan_no_hi, [
   ...>   {~D[2025-01-01], "元日"},
   ...>   {~D[2025-05-03], "憲法記念日"},
   ...>   {~D[2025-05-05], "こどもの日"}
   ...> ])
-  iex> NanNoHi.lookup(table, 2025)
+  iex> NanNoHi.lookup(nan_no_hi, 2025)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, 2025, 5)
+  iex> NanNoHi.lookup(nan_no_hi, 2025, 5)
   [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.lookup(table, 2025, 5, 5)
+  iex> NanNoHi.lookup(nan_no_hi, 2025, 5, 5)
   [{~D[2025-05-05], "こどもの日"}]
   ```
   """
-  @spec lookup(State.t(), year(), month(), day()) :: events()
-  def lookup(%State{} = state, year, month, day) when is_date(year, month, day) do
-    lookup_events(state, year, month, day)
+  @spec lookup(t(), year(), month(), day()) :: events()
+  def lookup(%__MODULE__{} = nan_no_hi, year, month, day) when is_date(year, month, day) do
+    lookup_events(nan_no_hi, year, month, day)
   end
 
   @doc """
@@ -219,17 +222,17 @@ defmodule NanNoHi do
   ## Examples
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.append(table, 2023, 1, 1, "元日")
-  iex> NanNoHi.append(table, 2024, 1, 1, "元日")
-  iex> NanNoHi.append(table, 2025, 1, 1, "元日")
-  iex> NanNoHi.lookup_all(table)
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.append(nan_no_hi, 2023, 1, 1, "元日")
+  iex> NanNoHi.append(nan_no_hi, 2024, 1, 1, "元日")
+  iex> NanNoHi.append(nan_no_hi, 2025, 1, 1, "元日")
+  iex> NanNoHi.lookup_all(nan_no_hi)
   [{~D[2023-01-01], "元日"}, {~D[2024-01-01], "元日"}, {~D[2025-01-01], "元日"}]
   ```
   """
-  @spec lookup_all(State.t()) :: events()
-  def lookup_all(%State{} = state) do
-    lookup_events(state, :_, :_, :_)
+  @spec lookup_all(t()) :: events()
+  def lookup_all(%__MODULE__{} = nan_no_hi) do
+    lookup_events(nan_no_hi, :_, :_, :_)
   end
 
   @doc """
@@ -238,26 +241,26 @@ defmodule NanNoHi do
   ## Examples
 
   ```elixir
-  iex> table = NanNoHi.new()
-  iex> NanNoHi.append(table, 2025, 1, 1, "元日")
-  iex> NanNoHi.append(table, 2025, 5, 5, "こどもの日")
-  iex> NanNoHi.lookup_all(table)
+  iex> nan_no_hi = NanNoHi.new()
+  iex> NanNoHi.append(nan_no_hi, 2025, 1, 1, "元日")
+  iex> NanNoHi.append(nan_no_hi, 2025, 5, 5, "こどもの日")
+  iex> NanNoHi.lookup_all(nan_no_hi)
   [{~D[2025-01-01], "元日"}, {~D[2025-05-05], "こどもの日"}]
-  iex> NanNoHi.clear(table)
+  iex> NanNoHi.clear(nan_no_hi)
   :ok
-  iex> NanNoHi.lookup_all(table)
+  iex> NanNoHi.lookup_all(nan_no_hi)
   []
   ```
   """
-  @spec clear(State.t()) :: :ok
-  def clear(%State{} = state) do
-    :ets.delete_all_objects(state.table)
+  @spec clear(t()) :: :ok
+  def clear(%__MODULE__{} = nan_no_hi) do
+    :ets.delete_all_objects(nan_no_hi.table)
 
     :ok
   end
 
-  defp lookup_events(%State{} = state, year, month, day) do
-    :ets.select(state.table, [{{{year, month, day}, :_}, [], [:"$_"]}])
+  defp lookup_events(%__MODULE__{} = nan_no_hi, year, month, day) do
+    :ets.select(nan_no_hi.table, [{{{year, month, day}, :_}, [], [:"$_"]}])
     |> Enum.sort()
     |> Enum.map(fn {erl_date, description} -> {Date.from_erl!(erl_date), description} end)
   end
