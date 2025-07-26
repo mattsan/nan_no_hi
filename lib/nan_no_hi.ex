@@ -4,6 +4,7 @@ defmodule NanNoHi do
   """
 
   alias NanNoHi.Import
+  alias NanNoHi.State
 
   @type year :: pos_integer()
   @type month :: 1..12
@@ -19,10 +20,11 @@ defmodule NanNoHi do
   @doc """
   Creates new table.
   """
-  @spec new(list()) :: :ets.table()
+  @spec new(list()) :: State.t()
   def new(options \\ []) when is_list(options) do
     name = Keyword.get(options, :name, __MODULE__)
-    :ets.new(name, [:bag])
+    table = :ets.new(name, [:bag])
+    State.new(table: table)
   end
 
   @doc """
@@ -42,11 +44,10 @@ defmodule NanNoHi do
   [{~D[2025-01-01], "元日"}, {~D[2025-05-05], "こどもの日"}]
   ```
   """
-  @spec append(:ets.table(), Date.t(), term()) :: :ok
-  def append(table, date, description) when is_struct(date, Date) do
-    {year, month, day} = Date.to_erl(date)
-
-    append(table, year, month, day, description)
+  @spec append(State.t(), Date.t(), term()) :: :ok
+  def append(%State{} = state, date, description) when is_struct(date, Date) do
+    :ets.insert(state.table, {Date.to_erl(date), description})
+    :ok
   end
 
   @doc """
@@ -74,10 +75,10 @@ defmodule NanNoHi do
   {:error, :invalid_date}
   ```
   """
-  @spec append(:ets.table(), year(), month(), day(), term()) :: :ok | {:error, :invalid_date}
-  def append(table, year, month, day, description) do
+  @spec append(State.t(), year(), month(), day(), term()) :: :ok | {:error, :invalid_date}
+  def append(%State{} = state, year, month, day, description) do
     if is_date(year, month, day) && :calendar.valid_date(year, month, day) do
-      :ets.insert(table, {{year, month, day}, description})
+      :ets.insert(state.table, {{year, month, day}, description})
       :ok
     else
       {:error, :invalid_date}
@@ -142,15 +143,15 @@ defmodule NanNoHi do
   {:error, ["Jan 1st 2025"]}
   ```
   """
-  @spec import(:ets.table(), events() | String.t()) :: :ok | {:error, term()}
-  def import(table, input) when is_list(input) or is_binary(input) do
+  @spec import(State.t(), events() | String.t()) :: :ok | {:error, term()}
+  def import(%State{} = state, input) when is_list(input) or is_binary(input) do
     cond do
       is_list(input) -> Import.import_list(input)
       is_binary(input) -> Import.import_csv(input)
     end
     |> case do
       {:ok, events} ->
-        Enum.each(events, &:ets.insert(table, &1))
+        Enum.each(events, &:ets.insert(state.table, &1))
 
         :ok
 
@@ -164,17 +165,17 @@ defmodule NanNoHi do
 
   See `lookup/4`.
   """
-  @spec lookup(:ets.table(), integer() | Date.t()) :: events()
-  def lookup(table, year_or_date)
+  @spec lookup(State.t(), integer() | Date.t()) :: events()
+  def lookup(state, year_or_date)
 
-  def lookup(table, %Date{} = date) do
+  def lookup(%State{} = state, %Date{} = date) do
     {year, month, day} = Date.to_erl(date)
 
-    lookup(table, year, month, day)
+    lookup_events(state, year, month, day)
   end
 
-  def lookup(table, year) when is_date(year) do
-    lookup_events(table, year, :_, :_)
+  def lookup(%State{} = state, year) when is_date(year) do
+    lookup_events(state, year, :_, :_)
   end
 
   @doc """
@@ -182,9 +183,9 @@ defmodule NanNoHi do
 
   See `lookup/4`.
   """
-  @spec lookup(:ets.table(), year(), month()) :: events()
-  def lookup(table, year, month) when is_date(year, month) do
-    lookup_events(table, year, month, :_)
+  @spec lookup(State.t(), year(), month()) :: events()
+  def lookup(%State{} = state, year, month) when is_date(year, month) do
+    lookup_events(state, year, month, :_)
   end
 
   @doc """
@@ -207,9 +208,9 @@ defmodule NanNoHi do
   [{~D[2025-05-05], "こどもの日"}]
   ```
   """
-  @spec lookup(:ets.table(), year(), month(), day()) :: events()
-  def lookup(table, year, month, day) when is_date(year, month, day) do
-    lookup_events(table, year, month, day)
+  @spec lookup(State.t(), year(), month(), day()) :: events()
+  def lookup(%State{} = state, year, month, day) when is_date(year, month, day) do
+    lookup_events(state, year, month, day)
   end
 
   @doc """
@@ -226,9 +227,9 @@ defmodule NanNoHi do
   [{~D[2023-01-01], "元日"}, {~D[2024-01-01], "元日"}, {~D[2025-01-01], "元日"}]
   ```
   """
-  @spec lookup_all(:ets.table()) :: events()
-  def lookup_all(table) do
-    lookup_events(table, :_, :_, :_)
+  @spec lookup_all(State.t()) :: events()
+  def lookup_all(%State{} = state) do
+    lookup_events(state, :_, :_, :_)
   end
 
   @doc """
@@ -248,15 +249,15 @@ defmodule NanNoHi do
   []
   ```
   """
-  @spec clear(:ets.table()) :: :ok
-  def clear(table) do
-    :ets.delete_all_objects(table)
+  @spec clear(State.t()) :: :ok
+  def clear(%State{} = state) do
+    :ets.delete_all_objects(state.table)
 
     :ok
   end
 
-  defp lookup_events(table, year, month, day) do
-    :ets.select(table, [{{{year, month, day}, :_}, [], [:"$_"]}])
+  defp lookup_events(%State{} = state, year, month, day) do
+    :ets.select(state.table, [{{{year, month, day}, :_}, [], [:"$_"]}])
     |> Enum.sort()
     |> Enum.map(fn {erl_date, description} -> {Date.from_erl!(erl_date), description} end)
   end
