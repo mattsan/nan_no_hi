@@ -5,22 +5,28 @@ defmodule NanNoHi.Utils do
 
   NimbleCSV.define(CsvParser, [])
 
+  defguardp is_pos_int(n) when is_integer(n) and n > 0
+
+  @doc """
+  Parses input.
+
+  ### Examples
+
+  ```elixir
+  iex> NanNoHi.Utils.parse_input(\"""
+  ...> date,event
+  ...> 2025/01/01,元日
+  ...> 2025/05/05,子供の日
+  ...> \""")
+  {:ok, [{{2025, 1, 1}, "元日"}, {{2025, 5, 5}, "子供の日"}]}
+  ```
+  """
   @spec parse_input(list() | String.t()) :: {:ok, NanNoHi.events()} | {:error, term()}
   def parse_input(input)
 
-  def parse_input(input) when is_list(input) do
-    {:ok, input}
-  end
-
-  def parse_input(input) when is_binary(input) do
+  def parse_input(input) do
     input
-    |> CsvParser.parse_string()
-    |> Enum.map(fn [string_date, description] ->
-      case string_to_erl_date(string_date) do
-        {:ok, date} -> {:ok, {date, description}}
-        {:error, _} = error -> error
-      end
-    end)
+    |> validate()
     |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
     |> then(fn
       %{error: errors} ->
@@ -28,6 +34,45 @@ defmodule NanNoHi.Utils do
 
       %{ok: events} ->
         {:ok, events}
+
+      _ ->
+        {:ok, []}
+    end)
+  end
+
+  defp validate(input) when is_list(input) do
+    input
+    |> Enum.map(fn
+      {%Date{} = date, description} ->
+        {:ok, {Date.to_erl(date), description}}
+
+      {{y, m, d} = date, description} when is_pos_int(y) and is_pos_int(m) and is_pos_int(d) ->
+        if :calendar.valid_date(date) do
+          {:ok, {date, description}}
+        else
+          {:error, date}
+        end
+
+      {date, _description} ->
+        {:error, date}
+
+      another ->
+        {:error, another}
+    end)
+  end
+
+  defp validate(input) when is_binary(input) do
+    input
+    |> CsvParser.parse_string()
+    |> Enum.map(fn
+      [string_date, description] ->
+        case string_to_erl_date(string_date) do
+          {:ok, date} -> {:ok, {date, description}}
+          {:error, _} = error -> error
+        end
+
+      invalid_row ->
+        {:error, invalid_row}
     end)
   end
 

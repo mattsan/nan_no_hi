@@ -5,6 +5,139 @@ defmodule NanNoHi.UtilsTest do
 
   doctest Utils
 
+  describe "parse_input/1 with valid list" do
+    import Utils, only: [parse_input: 1]
+
+    test "empty list" do
+      assert {:ok, []} == parse_input([])
+    end
+
+    test "Erlang date tuple" do
+      input = [
+        {{2024, 1, 1}, "元日"},
+        {{2024, 5, 5}, "子供の日"},
+        {{2025, 1, 1}, "元日"},
+        {{2025, 5, 5}, "子供の日"}
+      ]
+
+      expected = [
+        {{2024, 1, 1}, "元日"},
+        {{2024, 5, 5}, "子供の日"},
+        {{2025, 1, 1}, "元日"},
+        {{2025, 5, 5}, "子供の日"}
+      ]
+
+      assert {:ok, expected} == parse_input(input)
+    end
+
+    test "Date struct" do
+      input = [
+        {~D[2024-01-01], "元日"},
+        {~D[2024-05-05], "子供の日"},
+        {~D[2025-01-01], "元日"},
+        {~D[2025-05-05], "子供の日"}
+      ]
+
+      expected = [
+        {{2024, 1, 1}, "元日"},
+        {{2024, 5, 5}, "子供の日"},
+        {{2025, 1, 1}, "元日"},
+        {{2025, 5, 5}, "子供の日"}
+      ]
+
+      assert {:ok, expected} == parse_input(input)
+    end
+  end
+
+  describe "parse_input/1 with valid string" do
+    import Utils, only: [parse_input: 1]
+
+    test "empty string" do
+      assert {:ok, []} == parse_input("")
+    end
+
+    test "only header row" do
+      assert {:ok, []} == parse_input("date,event")
+    end
+
+    test "one day" do
+      input = """
+      date,event
+      2024/1/1,元日
+      2024/5/5,子供の日
+      2025/1/1,元日
+      2025/5/5,子供の日
+      """
+
+      expected = [
+        {{2024, 1, 1}, "元日"},
+        {{2024, 5, 5}, "子供の日"},
+        {{2025, 1, 1}, "元日"},
+        {{2025, 5, 5}, "子供の日"}
+      ]
+
+      assert {:ok, expected} == parse_input(input)
+    end
+  end
+
+  describe "parse_input/1 with invalid list" do
+    import Utils, only: [parse_input: 1]
+
+    test "includes invalid date format" do
+      input = [
+        {{2021, 1, 1}, "元日"},
+        {"Jan 1st 2022", "元日"},
+        {{2023, 1, 1}, "元日"},
+        {"Jan 1st 2024", "元日"},
+        {{2025, 1, 1}, "元日"}
+      ]
+
+      assert {:error, ["Jan 1st 2022", "Jan 1st 2024"]} == parse_input(input)
+    end
+
+    test "includes invalid tuples" do
+      input = [
+        {{2021, 1, 1}, "元日"},
+        {{2022, 1, 1}},
+        {{2023, 1, 1}, "元日"},
+        {{2024, 1, 1}, "元日", :leap_year},
+        {{2025, 1, 1}, "元日"}
+      ]
+
+      assert {:error, [{{2022, 1, 1}}, {{2024, 1, 1}, "元日", :leap_year}]} == parse_input(input)
+    end
+  end
+
+  describe "parse_input/1 with invalid string" do
+    import Utils, only: [parse_input: 1]
+
+    test "includes invalid date format" do
+      input = """
+      date,event
+      2021/1/1,元日
+      Jan 1st 2022,元日
+      2023/1/1,元日
+      Jan 1st 2024,元日
+      2025/1/1,元日
+      """
+
+      assert {:error, ["Jan 1st 2022", "Jan 1st 2024"]} == parse_input(input)
+    end
+
+    test "includes invalid rows" do
+      input = """
+      date,event
+      2021/1/1,元日
+      2022/1/1
+      2023/1/1,元日
+      2024/1/1,元日,leap_year
+      2025/1/1,元日
+      """
+
+      assert {:error, [["2022/1/1"], ["2024/1/1", "元日", "leap_year"]]} == parse_input(input)
+    end
+  end
+
   describe "string_to_erl_date/1 with valid patterns" do
     import Utils, only: [string_to_erl_date: 1]
 
