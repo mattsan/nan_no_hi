@@ -13,8 +13,8 @@ Mix.install([
 {:ok, uri} = URI.new("https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv")
 filename = Path.basename(uri.path)
 
-# Start server
-{:ok, pid} = NanNoHi.start_link()
+# Make a new table
+table = NanNoHi.new()
 
 # Download CSV file if it's not been downloaded
 if !File.exists?(filename) do
@@ -29,19 +29,19 @@ end
 # Read CSV
 {:ok, csv} = File.read(filename)
 
-NanNoHi.import(pid, csv)
+NanNoHi.import(table, csv)
 
 options = System.argv()
 
 case Enum.map(options, &Integer.parse/1) do
   [{year, ""}, {month, ""}, {day, ""}] ->
-    {:ok, NanNoHi.lookup(pid, year, month, day)}
+    {:ok, NanNoHi.lookup(table, year, month, day)}
 
   [{year, ""}, {month, ""}] ->
-    {:ok, NanNoHi.lookup(pid, year, month)}
+    {:ok, NanNoHi.lookup(table, year, month)}
 
   [{year, ""}] ->
-    {:ok, NanNoHi.lookup(pid, year)}
+    {:ok, NanNoHi.lookup(table, year)}
 
   _ ->
     usage = """
