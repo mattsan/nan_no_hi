@@ -1,6 +1,6 @@
-defmodule NanNoHi.Utils do
+defmodule NanNoHi.Import do
   @moduledoc """
-  Utility functions for NanNoHi event management.
+  Event import functions for NanNoHi.
 
   This module provides functions for importing events from various formats
   (lists and CSV), parsing date strings, and handling errors during import.
@@ -20,7 +20,7 @@ defmodule NanNoHi.Utils do
   ## Examples
 
   ```elixir
-  iex> NanNoHi.Utils.import_list([
+  iex> NanNoHi.Import.import_list([
   ...>   {{2025, 1, 1}, "元日"},
   ...>   {{2025, 5, 5}, "子供の日"}
   ...> ])
@@ -28,7 +28,7 @@ defmodule NanNoHi.Utils do
   ```
 
   ```elixir
-  iex> NanNoHi.Utils.import_list([
+  iex> NanNoHi.Import.import_list([
   ...>   {~D[2025-01-01], "元日"},
   ...>   {~D[2025-05-05], "子供の日"}
   ...> ])
@@ -69,7 +69,7 @@ defmodule NanNoHi.Utils do
   ## Examples
 
   ```elixir
-  iex> NanNoHi.Utils.import_csv(\"""
+  iex> NanNoHi.Import.import_csv(\"""
   ...> date,event
   ...> 2025/01/01,元日
   ...> 2025/05/05,子供の日
@@ -104,17 +104,17 @@ defmodule NanNoHi.Utils do
   ## Examples
 
   ```elixir
-  iex> NanNoHi.Utils.collect_results([ok: "A", ok: "B", ok: "C", ok: "D"])
+  iex> NanNoHi.Import.collect_results([ok: "A", ok: "B", ok: "C", ok: "D"])
   {:ok, ["A", "B", "C", "D"]}
   ```
 
   ```elixir
-  iex> NanNoHi.Utils.collect_results([ok: "A", error: "B", ok: "C", error: "D"])
+  iex> NanNoHi.Import.collect_results([ok: "A", error: "B", ok: "C", error: "D"])
   {:error, ["B", "D"]}
   ```
 
   ```elixir
-  iex> NanNoHi.Utils.collect_results([])
+  iex> NanNoHi.Import.collect_results([])
   {:ok, []}
   ```
   """
@@ -140,22 +140,22 @@ defmodule NanNoHi.Utils do
   ## Examples
 
   ```elixir
-  iex> NanNoHi.Utils.string_to_erl_date("2025-01-01")
+  iex> NanNoHi.Import.string_to_erl_date("2025-01-01")
   {:ok, {2025, 1, 1}}
 
-  iex> NanNoHi.Utils.string_to_erl_date("2025/01/01")
+  iex> NanNoHi.Import.string_to_erl_date("2025/01/01")
   {:ok, {2025, 1, 1}}
 
-  iex> NanNoHi.Utils.string_to_erl_date("2025/1/1")
+  iex> NanNoHi.Import.string_to_erl_date("2025/1/1")
   {:ok, {2025, 1, 1}}
 
-  iex> NanNoHi.Utils.string_to_erl_date("20250101")
+  iex> NanNoHi.Import.string_to_erl_date("20250101")
   {:ok, {2025, 1, 1}}
 
-  iex> NanNoHi.Utils.string_to_erl_date("20250229") # invalid date
+  iex> NanNoHi.Import.string_to_erl_date("20250229") # invalid date
   {:error, "20250229"}
 
-  iex> NanNoHi.Utils.string_to_erl_date("Jan 1st, 2025") # invalid format
+  iex> NanNoHi.Import.string_to_erl_date("Jan 1st, 2025") # invalid format
   {:error, "Jan 1st, 2025"}
   ```
   """

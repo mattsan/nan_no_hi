@@ -1,12 +1,12 @@
-defmodule NanNoHi.UtilsTest do
+defmodule NanNoHi.ImportTest do
   use ExUnit.Case
 
-  alias NanNoHi.Utils
+  alias NanNoHi.Import
 
-  doctest Utils
+  doctest Import
 
   describe "import_list/1 with valid list" do
-    import Utils, only: [import_list: 1]
+    import Import, only: [import_list: 1]
 
     test "empty list" do
       assert {:ok, []} == import_list([])
@@ -50,7 +50,7 @@ defmodule NanNoHi.UtilsTest do
   end
 
   describe "import_list/1 with invalid list" do
-    import Utils, only: [import_list: 1]
+    import Import, only: [import_list: 1]
 
     test "includes invalid date format" do
       input = [
@@ -78,7 +78,7 @@ defmodule NanNoHi.UtilsTest do
   end
 
   describe "import_csv/1 with valid string" do
-    import Utils, only: [import_csv: 1]
+    import Import, only: [import_csv: 1]
 
     test "empty string" do
       assert {:ok, []} == import_csv("")
@@ -109,7 +109,7 @@ defmodule NanNoHi.UtilsTest do
   end
 
   describe "import_csv/1 with invalid string" do
-    import Utils, only: [import_csv: 1]
+    import Import, only: [import_csv: 1]
 
     test "includes invalid date format" do
       input = """
@@ -139,7 +139,7 @@ defmodule NanNoHi.UtilsTest do
   end
 
   describe "string_to_erl_date/1 with valid patterns" do
-    import Utils, only: [string_to_erl_date: 1]
+    import Import, only: [string_to_erl_date: 1]
 
     test "2025-01-01", do: assert({:ok, {2025, 1, 1}} == string_to_erl_date("2025-01-01"))
     test "2025/01/01", do: assert({:ok, {2025, 1, 1}} == string_to_erl_date("2025/01/01"))
@@ -155,7 +155,7 @@ defmodule NanNoHi.UtilsTest do
   end
 
   describe "string_to_erl_date/1 with invalid patterns" do
-    import Utils, only: [string_to_erl_date: 1]
+    import Import, only: [string_to_erl_date: 1]
 
     test "2025-02-29", do: assert({:error, "2025-02-29"} == string_to_erl_date("2025-02-29"))
     test "2025-00-01", do: assert({:error, "2025-00-01"} == string_to_erl_date("2025-00-01"))
@@ -177,7 +177,7 @@ defmodule NanNoHi.UtilsTest do
   end
 
   describe "collect_results/1" do
-    import Utils, only: [collect_results: 1]
+    import Import, only: [collect_results: 1]
 
     test "all success" do
       input = [{:ok, "A"}, {:ok, "B"}, {:ok, "C"}, {:ok, "D"}]

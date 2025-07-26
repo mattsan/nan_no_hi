@@ -3,7 +3,7 @@ defmodule NanNoHi do
   An interface for NanNoHi.
   """
 
-  alias NanNoHi.Utils
+  alias NanNoHi.Import
 
   @type year :: pos_integer()
   @type month :: 1..12
@@ -110,8 +110,8 @@ defmodule NanNoHi do
   @spec import(:ets.table(), events() | String.t()) :: :ok | {:error, term()}
   def import(table, input) when is_list(input) or is_binary(input) do
     cond do
-      is_list(input) -> Utils.import_list(input)
-      is_binary(input) -> Utils.import_csv(input)
+      is_list(input) -> Import.import_list(input)
+      is_binary(input) -> Import.import_csv(input)
     end
     |> case do
       {:ok, events} ->
