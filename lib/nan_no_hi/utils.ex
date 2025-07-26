@@ -1,6 +1,9 @@
 defmodule NanNoHi.Utils do
   @moduledoc """
-  Utilities.
+  Utility functions for NanNoHi event management.
+
+  This module provides functions for importing events from various formats
+  (lists and CSV), parsing date strings, and handling errors during import.
   """
 
   NimbleCSV.define(CsvParser, moduledoc: false)
@@ -8,7 +11,11 @@ defmodule NanNoHi.Utils do
   defguardp is_pos_int(n) when is_integer(n) and n > 0
 
   @doc """
-  Parses list.
+  Imports events from a list of date-description tuples.
+
+  Accepts a list where each element is a tuple containing a date and description.
+  Dates can be either Date structs or Erlang date tuples `{year, month, day}`.
+  Returns `{:ok, events}` on success or `{:error, invalid_items}` if any items are invalid.
 
   ## Examples
 
@@ -52,7 +59,12 @@ defmodule NanNoHi.Utils do
   end
 
   @doc """
-  Parses CSV.
+  Imports events from a CSV string.
+
+  Expects a CSV with two columns: date and event description.
+  The first row is treated as a header and ignored.
+  Supported date formats: YYYY-MM-DD, YYYY/MM/DD, YYYY/M/D, YYYYMMDD.
+  Returns `{:ok, events}` on success or `{:error, invalid_dates}` if any dates cannot be parsed.
 
   ## Examples
 
@@ -83,7 +95,11 @@ defmodule NanNoHi.Utils do
   end
 
   @doc """
-  Splits errors if the list includes errors.
+  Processes a list of `{:ok, value}` and `{:error, reason}` tuples.
+
+  If any errors exist, returns `{:error, [reasons]}` with all error reasons.
+  If all items are successful, returns `{:ok, [values]}` with all values.
+  An empty list returns `{:ok, []}`.
 
   ## Examples
 
@@ -123,7 +139,7 @@ defmodule NanNoHi.Utils do
 
   ## Examples
 
-  ```
+  ```elixir
   iex> NanNoHi.Utils.string_to_erl_date("2025-01-01")
   {:ok, {2025, 1, 1}}
 
