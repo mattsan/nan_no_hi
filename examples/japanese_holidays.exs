@@ -4,64 +4,138 @@
 # - [CSV data](https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv) (from 1955 to the next year)
 
 # Install packages
+# - req: HTTP client library for downloading CSV data
+# - iconv: Character encoding conversion (Shift_JIS to UTF-8)
+# - nan_no_hi: Date event management library (local path)
 Mix.install([
   {:req, "~> 0.5"},
   {:iconv, "~> 1.0"},
   {:nan_no_hi, path: "."}
 ])
 
-{:ok, uri} = URI.new("https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv")
-filename = Path.basename(uri.path)
+# GenServer-based module to manage Japanese holidays data
+defmodule JapaneseHolidays do
+  use GenServer
 
-# Make a new table
-table = NanNoHi.new()
+  # URL of the official Japanese national holidays CSV file from the Cabinet Office
+  # This file is updated annually and contains holiday data from 1955 onwards
+  @csv_url "https://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv"
 
-# Download CSV file if it's not been downloaded
-if !File.exists?(filename) do
-  csv =
-    uri
-    |> Req.get!(raw: true)
-    |> then(&:iconv.convert("cp932", "utf-8", &1.body))
+  # Start the GenServer with fetched CSV data
+  def start_link(_ \\ []) do
+    csv = fetch_csv()
 
-  File.write(filename, csv)
+    GenServer.start_link(__MODULE__, csv, name: __MODULE__)
+  end
+
+  # Public API functions for looking up holidays
+  def lookup(year), do: GenServer.call(__MODULE__, {:lookup, {year}})
+  def lookup(year, month), do: GenServer.call(__MODULE__, {:lookup, {year, month}})
+  def lookup(year, month, day), do: GenServer.call(__MODULE__, {:lookup, {year, month, day}})
+
+  # Initialize GenServer state with holidays data
+  def init(csv) do
+    # Create a new ETS table named after this module
+    table = NanNoHi.new(name: __MODULE__)
+
+    # Import CSV data into the table
+    NanNoHi.import(table, csv)
+
+    {:ok, %{table: table}}
+  end
+
+  # Handle lookup requests based on date granularity
+  def handle_call({:lookup, date}, _from, state) do
+    result =
+      case date do
+        {year} -> NanNoHi.lookup(state.table, year)
+        {year, month} -> NanNoHi.lookup(state.table, year, month)
+        {year, month, day} -> NanNoHi.lookup(state.table, year, month, day)
+      end
+
+    {:reply, result, state}
+  end
+
+  # Fetch Japanese holidays CSV data from Cabinet Office website
+  defp fetch_csv do
+    {:ok, uri} = URI.new(@csv_url)
+    filename = Path.basename(uri.path)
+
+    # Use cached file if it exists, otherwise download
+    if File.exists?(filename) do
+      File.read!(filename)
+    else
+      # Download CSV (raw mode to handle binary data)
+      # Convert from Shift_JIS (cp932) to UTF-8 encoding
+      csv = uri |> Req.get!(raw: true) |> Map.get(:body) |> shift_jis_to_utf8()
+
+      # Cache the file locally
+      File.write!(filename, csv)
+
+      csv
+    end
+  end
+
+  # Convert text from Shift_JIS (CP932) encoding to UTF-8
+  # Japanese government websites often use Shift_JIS encoding for CSV files
+  # CP932 is Microsoft's implementation of Shift_JIS with additional characters
+  defp shift_jis_to_utf8(string) do
+    :iconv.convert("cp932", "utf-8", string)
+  end
 end
 
-# Read CSV
-{:ok, csv} = File.read(filename)
+# Command-line argument parser module
+defmodule ArgumentParser do
+  # Parse command-line arguments and validate them as integers
+  def parse(args) do
+    case Enum.map(args, &Integer.parse/1) do
+      # Three arguments: year, month, and day
+      [{year, ""}, {month, ""}, {day, ""}] ->
+        {:ok, JapaneseHolidays.lookup(year, month, day)}
 
-NanNoHi.import(table, csv)
+      # Two arguments: year and month
+      [{year, ""}, {month, ""}] ->
+        {:ok, JapaneseHolidays.lookup(year, month)}
 
-options = System.argv()
+      # One argument: year only
+      [{year, ""}] ->
+        {:ok, JapaneseHolidays.lookup(year)}
 
-case Enum.map(options, &Integer.parse/1) do
-  [{year, ""}, {month, ""}, {day, ""}] ->
-    {:ok, NanNoHi.lookup(table, year, month, day)}
+      # Invalid arguments
+      _ ->
+        {:error, error_message(args)}
+    end
+  end
 
-  [{year, ""}, {month, ""}] ->
-    {:ok, NanNoHi.lookup(table, year, month)}
-
-  [{year, ""}] ->
-    {:ok, NanNoHi.lookup(table, year)}
-
-  _ ->
-    usage = """
-    Invalid options #{inspect(options)}
+  # Generate error message for invalid arguments
+  defp error_message(args) do
+    """
+    Invalid arguments #{inspect(args)}
 
     usage: elixir examples/japanese_holidays.exs <year> [<month> [<day>]]
     """
-
-    {:error, usage}
+  end
 end
-|> case do
-  {:ok, []} ->
-    IO.puts("No events")
 
-  {:ok, events} ->
-    events
+# Start the JapaneseHolidays GenServer
+{:ok, _} = JapaneseHolidays.start_link()
+
+# Process command-line arguments and display results
+System.argv()
+|> ArgumentParser.parse()
+|> case do
+  # No holidays found for the given date
+  {:ok, []} ->
+    IO.puts("No holidays found")
+
+  # Display found holidays
+  {:ok, holidays} ->
+    holidays
     |> Enum.each(fn {date, description} ->
       IO.puts("#{date} #{description}")
     end)
 
+  # Display error message for invalid arguments
   {:error, reason} ->
     IO.puts(reason)
 end

@@ -107,10 +107,11 @@ defmodule NanNoHi do
   """
   @spec import(:ets.table(), events() | String.t()) :: :ok | {:error, term()}
   def import(table, events_or_string) do
-    with {:ok, events} <- NanNoHi.Utils.parse_input(events_or_string) do
-      import_events(events, table)
-      :ok
-    else
+    case NanNoHi.Utils.parse_input(events_or_string) do
+      {:ok, events} ->
+        import_events(events, table)
+        :ok
+
       error ->
         error
     end
