@@ -2,7 +2,7 @@ defmodule NanNoHiTest do
   use ExUnit.Case
   doctest NanNoHi
 
-  defp store_japanese_holidays(%{pid: pid}) do
+  defp store_japanese_holidays(%{table: table}) do
     [
       {~D[2024-01-01], "元日"},
       {~D[2024-01-08], "成人の日"},
@@ -46,20 +46,20 @@ defmodule NanNoHiTest do
       {~D[2025-11-24], "休日"}
     ]
     |> Enum.each(fn {date, event} ->
-      NanNoHi.append(pid, date, event)
+      NanNoHi.append(table, date, event)
     end)
   end
 
   setup do
-    {:ok, pid} = start_supervised(NanNoHi.Server)
+    table = NanNoHi.new()
 
-    [pid: pid]
+    [table: table]
   end
 
   describe "lookup/2" do
     setup :store_japanese_holidays
 
-    test "2025", %{pid: pid} do
+    test "2025", %{table: table} do
       expected_events = [
         {~D[2025-01-01], "元日"},
         {~D[2025-01-13], "成人の日"},
@@ -82,22 +82,22 @@ defmodule NanNoHiTest do
         {~D[2025-11-24], "休日"}
       ]
 
-      assert expected_events == NanNoHi.lookup(pid, 2025)
+      assert expected_events == NanNoHi.lookup(table, 2025)
     end
 
-    test "~D[2025-05-05]", %{pid: pid} do
-      assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(pid, ~D[2025-05-05])
+    test "~D[2025-05-05]", %{table: table} do
+      assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(table, ~D[2025-05-05])
     end
 
-    test "invalid year value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(pid, "2025") end)
+    test "invalid year value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(table, "2025") end)
     end
   end
 
   describe "lookup/3" do
     setup :store_japanese_holidays
 
-    test "2025-05", %{pid: pid} do
+    test "2025-05", %{table: table} do
       expected_events = [
         {~D[2025-05-03], "憲法記念日"},
         {~D[2025-05-04], "みどりの日"},
@@ -105,92 +105,92 @@ defmodule NanNoHiTest do
         {~D[2025-05-06], "休日"}
       ]
 
-      assert expected_events == NanNoHi.lookup(pid, 2025, 5)
+      assert expected_events == NanNoHi.lookup(table, 2025, 5)
     end
 
-    test "2025-06", %{pid: pid} do
-      assert [] == NanNoHi.lookup(pid, 2025, 6)
+    test "2025-06", %{table: table} do
+      assert [] == NanNoHi.lookup(table, 2025, 6)
     end
 
-    test "invalid month value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(pid, 2025, 13) end)
+    test "invalid month value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(table, 2025, 13) end)
     end
   end
 
   describe "lookup/4" do
     setup :store_japanese_holidays
 
-    test "2025-05-05", %{pid: pid} do
-      assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(pid, 2025, 5, 5)
+    test "2025-05-05", %{table: table} do
+      assert [{~D[2025-05-05], "こどもの日"}] == NanNoHi.lookup(table, 2025, 5, 5)
     end
 
-    test "2025-05-07", %{pid: pid} do
-      assert [] == NanNoHi.lookup(pid, 2025, 5, 7)
+    test "2025-05-07", %{table: table} do
+      assert [] == NanNoHi.lookup(table, 2025, 5, 7)
     end
 
-    test "invalid day value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(pid, 2025, 1, 32) end)
+    test "invalid day value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.lookup(table, 2025, 1, 32) end)
     end
   end
 
   describe "append/3" do
-    test "append a date", %{pid: pid} do
-      assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
-      assert :ok == NanNoHi.append(pid, ~D[2025-07-15], "rainy day")
-      assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
+    test "append a date", %{table: table} do
+      assert [] == NanNoHi.lookup(table, 2025, 7, 15)
+      assert :ok == NanNoHi.append(table, ~D[2025-07-15], "rainy day")
+      assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(table, 2025, 7, 15)
     end
 
-    test "append two events on a day", %{pid: pid} do
+    test "append two events on a day", %{table: table} do
       expected_events = [
         {~D[2025-07-16], "Wednesday"},
         {~D[2025-07-16], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
-      assert :ok == NanNoHi.append(pid, ~D[2025-07-16], "rainy day")
-      assert :ok == NanNoHi.append(pid, ~D[2025-07-16], "Wednesday")
-      assert expected_events == Enum.sort(NanNoHi.lookup(pid, 2025, 7, 16))
+      assert [] == NanNoHi.lookup(table, 2025, 7, 16)
+      assert :ok == NanNoHi.append(table, ~D[2025-07-16], "rainy day")
+      assert :ok == NanNoHi.append(table, ~D[2025-07-16], "Wednesday")
+      assert expected_events == Enum.sort(NanNoHi.lookup(table, 2025, 7, 16))
     end
 
-    test "invalid date value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, "2025-01-01", "元日") end)
+    test "invalid date value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, "2025-01-01", "元日") end)
     end
   end
 
   describe "append/5" do
-    test "append a date", %{pid: pid} do
-      assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
-      assert :ok == NanNoHi.append(pid, 2025, 7, 15, "rainy day")
-      assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(pid, 2025, 7, 15)
+    test "append a date", %{table: table} do
+      assert [] == NanNoHi.lookup(table, 2025, 7, 15)
+      assert :ok == NanNoHi.append(table, 2025, 7, 15, "rainy day")
+      assert [{~D[2025-07-15], "rainy day"}] == NanNoHi.lookup(table, 2025, 7, 15)
     end
 
-    test "append two events on a day", %{pid: pid} do
+    test "append two events on a day", %{table: table} do
       expected_events = [
         {~D[2025-07-16], "Wednesday"},
         {~D[2025-07-16], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7, 16)
-      assert :ok == NanNoHi.append(pid, 2025, 7, 16, "rainy day")
-      assert :ok == NanNoHi.append(pid, 2025, 7, 16, "Wednesday")
-      assert expected_events == Enum.sort(NanNoHi.lookup(pid, 2025, 7, 16))
+      assert [] == NanNoHi.lookup(table, 2025, 7, 16)
+      assert :ok == NanNoHi.append(table, 2025, 7, 16, "rainy day")
+      assert :ok == NanNoHi.append(table, 2025, 7, 16, "Wednesday")
+      assert expected_events == Enum.sort(NanNoHi.lookup(table, 2025, 7, 16))
     end
 
-    test "invalid year value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, "2025", 1, 1, "invalid") end)
+    test "invalid year value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, "2025", 1, 1, "invalid") end)
     end
 
-    test "invalid month value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, 2025, 13, 1, "invalid") end)
+    test "invalid month value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, 2025, 13, 1, "invalid") end)
     end
 
-    test "invalid day value", %{pid: pid} do
-      assert_raise(FunctionClauseError, fn -> NanNoHi.append(pid, 2025, 1, 32, "invalid") end)
+    test "invalid day value", %{table: table} do
+      assert_raise(FunctionClauseError, fn -> NanNoHi.append(table, 2025, 1, 32, "invalid") end)
     end
   end
 
   describe "import/2" do
-    test "import two events", %{pid: pid} do
+    test "import two events", %{table: table} do
       input_list = [
         {~D[2025-07-16], "Wednesday"},
         {~D[2025-07-17], "rainy day"}
@@ -201,12 +201,12 @@ defmodule NanNoHiTest do
         {~D[2025-07-17], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
-      assert :ok == NanNoHi.import(pid, input_list)
-      assert expected_events == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+      assert [] == NanNoHi.lookup(table, 2025, 7)
+      assert :ok == NanNoHi.import(table, input_list)
+      assert expected_events == Enum.sort(NanNoHi.lookup(table, 2025, 7))
     end
 
-    test "import from CSV format string (YYYY-MM-DD)", %{pid: pid} do
+    test "import from CSV format string (YYYY-MM-DD)", %{table: table} do
       input_string =
         """
         date,event
@@ -219,12 +219,12 @@ defmodule NanNoHiTest do
         {~D[2025-07-17], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
-      assert :ok == NanNoHi.import(pid, input_string)
-      assert expected_events == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+      assert [] == NanNoHi.lookup(table, 2025, 7)
+      assert :ok == NanNoHi.import(table, input_string)
+      assert expected_events == Enum.sort(NanNoHi.lookup(table, 2025, 7))
     end
 
-    test "import from CSV format string (YYYY/MM/DD)", %{pid: pid} do
+    test "import from CSV format string (YYYY/MM/DD)", %{table: table} do
       input_string = """
       date,event
       2025/7/16,Wednesday
@@ -236,12 +236,12 @@ defmodule NanNoHiTest do
         {~D[2025-07-17], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
-      assert :ok == NanNoHi.import(pid, input_string)
-      assert expected_events == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
+      assert [] == NanNoHi.lookup(table, 2025, 7)
+      assert :ok == NanNoHi.import(table, input_string)
+      assert expected_events == Enum.sort(NanNoHi.lookup(table, 2025, 7))
     end
 
-    test "import CSV format string including invalid dates", %{pid: pid} do
+    test "import CSV format string including invalid dates", %{table: table} do
       input_string = """
       date,event
       2025-07-01,Tuesday
@@ -250,26 +250,26 @@ defmodule NanNoHiTest do
       7 2nd 2025,Wednesday
       """
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
-      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(pid, input_string)
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
+      assert [] == NanNoHi.lookup(table, 2025, 7)
+      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(table, input_string)
+      assert [] == NanNoHi.lookup(table, 2025, 7)
     end
 
-    test "import invalid CSV format string", %{pid: pid} do
+    test "import invalid CSV format string", %{table: table} do
       input_string = """
       date,event
       7 1st 2025,Tuesday
       7 2nd 2025,Wednesday
       """
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
-      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(pid, input_string)
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
+      assert [] == NanNoHi.lookup(table, 2025, 7)
+      assert {:error, ["7 1st 2025", "7 2nd 2025"]} == NanNoHi.import(table, input_string)
+      assert [] == NanNoHi.lookup(table, 2025, 7)
     end
   end
 
   describe "NanNoHi.clear/1" do
-    test "clear all", %{pid: pid} do
+    test "clear all", %{table: table} do
       input_string = """
       date,event
       2025/7/16,Wednesday
@@ -281,16 +281,16 @@ defmodule NanNoHiTest do
         {~D[2025-07-17], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
-      assert :ok == NanNoHi.import(pid, input_string)
-      assert expected_events == Enum.sort(NanNoHi.lookup(pid, 2025, 7))
-      assert :ok == NanNoHi.clear(pid)
-      assert [] == NanNoHi.lookup(pid, 2025, 7)
+      assert [] == NanNoHi.lookup(table, 2025, 7)
+      assert :ok == NanNoHi.import(table, input_string)
+      assert expected_events == Enum.sort(NanNoHi.lookup(table, 2025, 7))
+      assert :ok == NanNoHi.clear(table)
+      assert [] == NanNoHi.lookup(table, 2025, 7)
     end
   end
 
   describe "lookup_all/1" do
-    test "lookup all", %{pid: pid} do
+    test "lookup all", %{table: table} do
       input_string = """
       date,event
       2025/7/16,Wednesday
@@ -302,17 +302,17 @@ defmodule NanNoHiTest do
         {~D[2025-07-17], "rainy day"}
       ]
 
-      assert [] == NanNoHi.lookup_all(pid)
-      assert :ok == NanNoHi.import(pid, input_string)
-      assert expected_events == Enum.sort(NanNoHi.lookup_all(pid))
+      assert [] == NanNoHi.lookup_all(table)
+      assert :ok == NanNoHi.import(table, input_string)
+      assert expected_events == Enum.sort(NanNoHi.lookup_all(table))
     end
   end
 
   describe "append complex events" do
-    test "append tuples", %{pid: pid} do
-      assert [] == NanNoHi.lookup(pid, 2025, 7, 15)
-      assert :ok == NanNoHi.append(pid, 2025, 7, 16, {"曜日", "水曜日"})
-      assert [{~D[2025-07-16], {"曜日", "水曜日"}}] == NanNoHi.lookup(pid, 2025, 7, 16)
+    test "append tuples", %{table: table} do
+      assert [] == NanNoHi.lookup(table, 2025, 7, 15)
+      assert :ok == NanNoHi.append(table, 2025, 7, 16, {"曜日", "水曜日"})
+      assert [{~D[2025-07-16], {"曜日", "水曜日"}}] == NanNoHi.lookup(table, 2025, 7, 16)
     end
   end
 end

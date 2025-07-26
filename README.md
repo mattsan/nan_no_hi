@@ -22,11 +22,11 @@ be found at <https://hexdocs.pm/nan_no_hi>.
 ## Examples
 
 ```elixir
-# start server
-{:ok, pid} = NanNoHi.start_link()
+# make new table
+table = NanNoHi.new()
 
 # import CSV
-NanNoHi.import(pid, """
+NanNoHi.import(table, """
 date,event
 2025/1/1,元日
 2025/5/3,憲法記念日
@@ -34,17 +34,17 @@ date,event
 """)
 
 # look up year
-NanNoHi.lookup(pid, 2025)
+NanNoHi.lookup(table, 2025)
 [{~D[2025-01-01], "元日"}, {~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
 
 # look up year and month
-NanNoHi.lookup(pid, 2025, 5)
+NanNoHi.lookup(table, 2025, 5)
 [{~D[2025-05-03], "憲法記念日"}, {~D[2025-05-05], "こどもの日"}]
 
 # look up the date
-NanNoHi.lookup(pid, 2025, 5, 5)
+NanNoHi.lookup(table, 2025, 5, 5)
 [{~D[2025-05-05], "こどもの日"}]
 
-NanNoHi.lookup(pid, ~D[2025-01-01])
+NanNoHi.lookup(table, ~D[2025-01-01])
 [{~D[2025-01-01], "元日"}]
 ```
