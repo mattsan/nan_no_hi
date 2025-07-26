@@ -48,22 +48,21 @@ defmodule JapaneseHolidays do
 
   # Initialize GenServer state with holidays data
   def init(csv) do
-    # Create a new ETS table named after this module
-    table = NanNoHi.new(name: __MODULE__)
+    state = NanNoHi.new(name: __MODULE__)
 
-    # Import CSV data into the table
-    NanNoHi.import(table, csv)
+    # Import CSV data
+    NanNoHi.import(state, csv)
 
-    {:ok, %{table: table}}
+    {:ok, state}
   end
 
   # Handle lookup requests based on date granularity
   def handle_call({:lookup, date}, _from, state) do
     result =
       case date do
-        {year} -> NanNoHi.lookup(state.table, year)
-        {year, month} -> NanNoHi.lookup(state.table, year, month)
-        {year, month, day} -> NanNoHi.lookup(state.table, year, month, day)
+        {year} -> NanNoHi.lookup(state, year)
+        {year, month} -> NanNoHi.lookup(state, year, month)
+        {year, month, day} -> NanNoHi.lookup(state, year, month, day)
       end
 
     {:reply, result, state}
